@@ -590,4 +590,371 @@
                     "5": {
                         q: "อธิบายการจัดการวงจรชีวิตของใบรับรองดิจิทัล (Certificate Lifecycle)",
                         a: `<p>คือการจัดการใบรับรองตั้งแต่ต้นจนจบ ประกอบด้วย:</p>
-                           <ol class="list-decimal list-inside space-y-
+                           <ol class="list-decimal list-inside space-y-2">
+                               <li><strong>การร้องขอและออกใบรับรอง (Request & Issuance):</strong> การสร้างและรับรองใบรับรองใหม่</li>
+                               <li><strong>การติดตั้งและใช้งาน (Installation & Use):</strong> การนำใบรับรองไปใช้งาน</li>
+                               <li><strong>การต่ออายุ (Renewal):</strong> การต่ออายุใบรับรองก่อนหมดอายุ เพื่อให้บริการไม่หยุดชะงัก</li>
+                               <li><strong>การเพิกถอน (Revocation):</strong> การยกเลิกใบรับรองก่อนหมดอายุ ในกรณีที่ Private Key รั่วไหล โดยประกาศผ่าน CRL หรือ OCSP</li>
+                               <li><strong>การหมดอายุ (Expiration):</strong> การสิ้นสุดการใช้งานเมื่อถึงกำหนด</li>
+                           </ol>
+                           <p class="mt-4">การจัดการที่ดีช่วยป้องกันปัญหาใบรับรองหมดอายุและป้องกันการใช้ใบรับรองที่ถูกขโมย</p>`
+                    }
+                }
+            },
+            "7": {
+                title: "บทที่ 7: Authentication Controls",
+                questions: {
+                    "1": {
+                        q: "อธิบายหลักการและความสำคัญของการตรวจสอบสิทธิ์ (Authentication)",
+                        a: `<p><strong>Authentication</strong> คือกระบวนการ <strong>พิสูจน์และยืนยันตัวตน</strong> ของผู้ใช้ว่าเป็นบุคคลที่กล่าวอ้างจริง เป็นการตอบคำถามว่า "คุณคือใคร?"</p>
+                           <p class="mt-4"><strong>ความสำคัญ:</strong> เป็นรากฐานของการควบคุมการเข้าถึง (Access Control) หากไม่มี Authentication ที่น่าเชื่อถือ มาตรการความปลอดภัยอื่นๆ ก็จะไร้ความหมาย เพราะใช้เพื่อ:</p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li>ป้องกันการเข้าถึงโดยไม่ได้รับอนุญาต</li>
+                               <li>เป็นพื้นฐานของการให้สิทธิ์ (Authorization) ว่าผู้ใช้คนนั้นมีสิทธิ์ทำอะไรได้บ้าง</li>
+                               <li>สร้างความรับผิดชอบ (Accountability) โดยสามารถติดตามกิจกรรมของผู้ใช้ได้</li>
+                           </ul>`
+                    },
+                    "2": {
+                        q: "เปรียบเทียบการตรวจสอบสิทธิ์แบบใช้รหัสผ่านและแบบหลายปัจจัย (MFA)",
+                        a: `<table>
+                                <thead>
+                                    <tr><th>ลักษณะ</th><th>รหัสผ่าน (Password)</th><th>หลายปัจจัย (MFA)</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>จำนวนปัจจัย</strong></td>
+                                        <td>ใช้ <strong>1 ปัจจัย</strong> ("สิ่งที่คุณรู้")</td>
+                                        <td>ใช้ <strong>2 ปัจจัยขึ้นไป</strong> จากประเภทที่ต่างกัน</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ประเภทปัจจัย</strong></td>
+                                        <td>- สิ่งที่คุณรู้</td>
+                                        <td>- สิ่งที่คุณรู้ (รหัสผ่าน)<br>- สิ่งที่คุณมี (มือถือ, Token)<br>- สิ่งที่คุณเป็น (ลายนิ้วมือ)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ความปลอดภัย</strong></td>
+                                        <td><strong>ต่ำ</strong> อ่อนแอต่อ Phishing, Brute-force</td>
+                                        <td><strong>สูงมาก</strong> แม้รหัสผ่านรั่วไหลก็ยังปลอดภัย</td>
+                                    </tr>
+                                </tbody>
+                            </table>`
+                    },
+                    "3": {
+                        q: "อธิบายวิธีการทำงานของโพรโทคอล Kerberos",
+                        a: `<p>Kerberos ทำงานคล้ายกับการ "ซื้อตั๋ว" เพื่อเข้าใช้บริการต่างๆ ในเครือข่าย:</p>
+                           <ol class="list-decimal list-inside space-y-2">
+                               <li><strong>ขอตั๋วตั้งต้น (TGT):</strong> เมื่อผู้ใช้ล็อกอินครั้งแรก Client จะขอ <strong>Ticket Granting Ticket (TGT)</strong> จาก Key Distribution Center (KDC)</li>
+                               <li><strong>ขอตั๋วเข้าใช้บริการ:</strong> เมื่อต้องการใช้บริการใดๆ Client จะนำ TGT ไปยื่นที่ KDC เพื่อขอ <strong>Service Ticket</strong> สำหรับบริการนั้นๆ</li>
+                               <li><strong>เข้าใช้บริการ:</strong> Client นำ Service Ticket ไปแสดงต่อ Application Server เพื่อเข้าใช้งาน</li>
+                           </ol>
+                           <p class="mt-4"><strong>ข้อดี:</strong> รองรับ Single Sign-On (SSO) และมีความปลอดภัยสูงเพราะรหัสผ่านถูกส่งเพียงครั้งเดียว</p>`
+                    },
+                    "4": {
+                        q: "อธิบายการใช้ไบโอเมตริก (Biometrics) ในการตรวจสอบสิทธิ์",
+                        a: `<p>ไบโอเมตริกคือการใช้ลักษณะเฉพาะทางกายภาพหรือพฤติกรรมในการยืนยันตัวตน เป็นปัจจัยประเภท "สิ่งที่คุณเป็น"</p>
+                           <p class="mt-4"><strong>ตัวอย่าง:</strong> ลายนิ้วมือ, ใบหน้า, ม่านตา, เสียงพูด</p>
+                           <p class="mt-4"><strong>ข้อควรระวัง:</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>ความผิดพลาด:</strong> อาจเกิดการยอมรับคนผิด (False Acceptance) หรือปฏิเสธเจ้าของ (False Rejection)</li>
+                               <li><strong>การปลอมแปลง (Spoofing):</strong> ข้อมูลบางอย่างอาจถูกปลอมแปลงได้</li>
+                               <li><strong>ความเป็นส่วนตัว:</strong> หากข้อมูลไบโอเมตริกรั่วไหล จะไม่สามารถเปลี่ยนแปลงได้เหมือนรหัสผ่าน</li>
+                           </ul>`
+                    },
+                    "5": {
+                        q: "อธิบายความแตกต่างระหว่าง 2FA กับ 2SV",
+                        a: `<p>แม้จะคล้ายกัน แต่มีความแตกต่างทางเทคนิค:</p>
+                           <ul class="list-disc list-inside space-y-3">
+                               <li><strong>2FA (Two-Factor Authentication):</strong> ต้องใช้หลักฐาน 2 อย่างจาก <strong>ปัจจัยคนละประเภทกัน</strong> เช่น รหัสผ่าน (รู้) + OTP จากมือถือ (มี)</li>
+                               <li><strong>2SV (Two-Step Verification):</strong> ใช้หลักฐาน 2 อย่าง ซึ่งอาจจะมาจาก <strong>ปัจจัยประเภทเดียวกันก็ได้</strong> เช่น รหัสผ่าน (รู้) + PIN (รู้)</li>
+                           </ul>
+                           <p class="mt-4"><strong>สรุป:</strong> 2FA ทุกรูปแบบคือ 2SV แต่ 2SV ไม่ใช่ 2FA ทุกรูปแบบ โดย 2FA มีความปลอดภัยสูงกว่า</p>`
+                    }
+                }
+            },
+             "8": {
+                title: "บทที่ 8: IAM Controls",
+                questions: {
+                    "1": {
+                        q: "อธิบายความสำคัญของการจัดการข้อมูลประจำตัวและการควบคุมบัญชี",
+                        a: `<p>การจัดการข้อมูลประจำตัวและการควบคุมบัญชี (IAM) คือกระบวนการที่ทำให้มั่นใจว่า <strong>"คนที่ใช่"</strong> สามารถเข้าถึง <strong>"ทรัพยากรที่ใช่"</strong> ใน <strong>"เวลาที่ใช่"</strong></p>
+                           <p class="mt-4"><strong>ความสำคัญ:</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>ควบคุมการเข้าถึง (Access Control):</strong> ป้องกันการเข้าถึงโดยไม่ได้รับอนุญาต</li>
+                               <li><strong>บังคับใช้หลักการให้สิทธิ์น้อยที่สุด (Least Privilege):</strong> จำกัดความเสียหายหากบัญชีถูกบุกรุก</li>
+                               <li><strong>สร้างความรับผิดชอบ (Accountability):</strong> สามารถติดตามและตรวจสอบได้ว่าใครทำอะไร</li>
+                               <li><strong>จัดการวงจรชีวิตบัญชี (Lifecycle Management):</strong> ดูแลบัญชีตั้งแต่การสร้างจนถึงการปิดบัญชีเมื่อลาออก</li>
+                           </ul>`
+                    },
+                    "2": {
+                        q: "วิเคราะห์ข้อดีและข้อเสียของ Multi-Factor Authentication (MFA)",
+                        a: `<table>
+                                <thead>
+                                    <tr><th>ข้อดี</th><th>ข้อเสีย</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>ความปลอดภัยสูงมาก:</strong> เป็นวิธีที่มีประสิทธิภาพที่สุดในการป้องกันการยึดครองบัญชี</td>
+                                        <td><strong>ความซับซ้อนในการใช้งาน:</strong> อาจสร้างความยุ่งยากให้ผู้ใช้</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ลดความเสี่ยงจากการใช้รหัสผ่านซ้ำ</strong></td>
+                                        <td><strong>ค่าใช้จ่ายในการติดตั้งและบำรุงรักษา</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>สนับสนุนการปฏิบัติตามข้อกำหนด</strong></td>
+                                        <td><strong>ปัญหาการกู้คืนบัญชี:</strong> หากผู้ใช้ทำอุปกรณ์สำหรับปัจจัยที่สองหาย</td>
+                                    </tr>
+                                </tbody>
+                            </table>`
+                    },
+                    "3": {
+                        q: "อธิบายวิธีการปฏิบัติที่ดีที่สุดในการบริหารจัดการบัญชีผู้ใช้ในองค์กรใหญ่",
+                        a: `<ul class="list-disc list-inside space-y-3">
+                               <li><strong>ใช้ระบบจัดการแบบรวมศูนย์ (Centralized Management):</strong> เช่น Active Directory หรือ LDAP</li>
+                               <li><strong>ใช้การควบคุมการเข้าถึงตามบทบาท (RBAC):</strong> สร้างบทบาทตามตำแหน่งงานแล้วกำหนดสิทธิ์ให้บทบาทนั้นๆ</li>
+                               <li><strong>ทำให้กระบวนการเป็นอัตโนมัติ (Automation):</strong> ใช้ระบบอัตโนมัติในการสร้างและปิดบัญชีเมื่อพนักงานเข้า/ออก</li>
+                               <li><strong>มีการทบทวนสิทธิ์อย่างสม่ำเสมอ (Regular Access Reviews):</strong> ตรวจสอบสิทธิ์การเข้าถึงของผู้ใช้เป็นประจำ</li>
+                               <li><strong>มีการบันทึกและตรวจสอบ (Logging and Auditing):</strong> บันทึกกิจกรรมการล็อกอินและการเข้าถึงทรัพยากร</li>
+                           </ul>`
+                    },
+                    "4": {
+                        q: "แนวทางการบริหารจัดการสิทธิ์แบบใดมีประสิทธิภาพที่สุดในสภาพแวดล้อมการทำงานของคุณ?",
+                        a: `<p>โดยทั่วไปแล้ว <strong>การควบคุมการเข้าถึงตามบทบาท (Role-Based Access Control - RBAC)</strong> มักจะมีประสิทธิภาพมากที่สุดสำหรับองค์กรส่วนใหญ่</p>
+                           <p class="mt-4"><strong>เหตุผล:</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>จัดการง่าย (Scalable):</strong> เหมาะกับองค์กรที่มีพนักงานจำนวนมากและมีการเปลี่ยนแปลงตำแหน่งบ่อย</li>
+                               <li><strong>สอดคล้องกับโครงสร้างองค์กร:</strong> สามารถออกแบบให้สอดคล้องกับตำแหน่งงานได้โดยตรง</li>
+                               <li><strong>บังคับใช้หลักการให้สิทธิ์น้อยที่สุดได้ดี:</strong> การออกแบบบทบาทที่ดีจะช่วยให้พนักงานได้รับสิทธิ์เท่าที่จำเป็น</li>
+                               <li><strong>ง่ายต่อการตรวจสอบ (Auditing):</strong> ตรวจสอบสิทธิ์ได้ง่ายโดยดูจากบทบาท</li>
+                           </ul>`
+                    },
+                    "5": {
+                        q: "วิจารณ์ความท้าทายในการบริหารจัดการบัญชีผู้ใช้และเสนอแนวทางแก้ไข",
+                        a: `<table>
+                                <thead>
+                                    <tr><th>ความท้าทาย</th><th>แนวทางแก้ไข</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Privilege Creep (สิทธิ์ที่เพิ่มขึ้นเรื่อยๆ):</strong> พนักงานย้ายแผนกแต่สิทธิ์เก่าไม่ถูกนำออก</td>
+                                        <td>นำกระบวนการ <strong>ทบทวนสิทธิ์การเข้าถึง (Access Review)</strong> มาใช้อย่างสม่ำเสมอ</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>บัญชีกำพร้า (Orphaned Accounts):</strong> พนักงานลาออกแต่บัญชีไม่ถูกปิด</td>
+                                        <td>สร้าง <strong>กระบวนการ Offboarding อัตโนมัติ</strong> ที่เชื่อมโยงกับระบบ HR</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>การจัดการบัญชีที่ไม่ใช่ของมนุษย์:</strong> เช่น Service Accounts, API Keys</td>
+                                        <td>ใช้เครื่องมือ <strong>Privileged Access Management (PAM)</strong> เพื่อจัดการและหมุนเวียนรหัสผ่านอัตโนมัติ</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>สภาพแวดล้อมแบบไฮบริด (On-premise & Cloud):</strong> การจัดการตัวตนซับซ้อน</td>
+                                        <td>ใช้โซลูชัน <strong>Identity Provider (IdP)</strong> ที่รองรับ Federation และ SSO</td>
+                                    </tr>
+                                </tbody>
+                            </table>`
+                    }
+                }
+            },
+            "9": {
+                title: "บทที่ 9: Secure Network Designs",
+                questions: {
+                    "1": {
+                        q: "อธิบายหลักการและความสำคัญของการแยกส่วนเครือข่าย (Network Segmentation)",
+                        a: `<p><strong>การแยกส่วนเครือข่าย (Network Segmentation)</strong> คือการแบ่งเครือข่ายใหญ่ออกเป็นส่วนย่อยๆ (Segment) ที่แยกจากกัน และควบคุมการสื่อสารระหว่างส่วนต่างๆ ผ่าน Firewall</p>
+                           <p class="mt-4"><strong>ความสำคัญ:</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>จำกัดการเคลื่อนที่ของภัยคุกคาม (Limit Lateral Movement):</strong> หากผู้โจมตีบุกรุกเข้ามาในส่วนหนึ่งได้ จะไม่สามารถเคลื่อนที่ไปยังส่วนอื่นได้ง่าย</li>
+                               <li><strong>ลดพื้นผิวการโจมตี (Reduce Attack Surface):</strong> ผู้โจมตีจะมองเห็นและเข้าถึงได้เฉพาะส่วนที่เปิดเผยสู่สาธารณะ</li>
+                               <li><strong>ปกป้องข้อมูลที่ละเอียดอ่อน:</strong> สามารถสร้างโซนที่มีความปลอดภัยสูงเป็นพิเศษสำหรับข้อมูลสำคัญ</li>
+                           </ul>`
+                    },
+                    "2": {
+                        q: "อธิบายบทบาทของการควบคุมการเข้าถึงแบบ Zero Trust",
+                        a: `<p><strong>Zero Trust</strong> คือรูปแบบความปลอดภัยที่มีหลักการว่า <strong>"Never trust, always verify"</strong> (ไม่ไว้วางใจสิ่งใดเลย, ตรวจสอบเสมอ) โดยจะยกเลิกแนวคิดที่ว่าสิ่งที่อยู่ "ภายใน" เครือข่ายน่าเชื่อถือ</p>
+                           <p class="mt-4"><strong>บทบาทสำคัญ:</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>ยกเลิกแนวคิดเรื่องขอบเขตที่น่าเชื่อถือ:</strong> ทุกการเชื่อมต่อต้องถูกตรวจสอบสิทธิ์ ไม่ว่าจะมาจากภายในหรือภายนอก</li>
+                               <li><strong>การตรวจสอบสิทธิ์ที่เข้มงวด:</strong> บังคับใช้ MFA สำหรับทุกการเข้าถึง</li>
+                               <li><strong>Micro-segmentation:</strong> แบ่งเครือข่ายในระดับที่ละเอียดมากยิ่งขึ้น อาจถึงระดับแอปพลิเคชันแต่ละตัว</li>
+                           </ul>`
+                    },
+                    "3": {
+                        q: "VPN มีประโยชน์ต่อความปลอดภัยของเครือข่ายอย่างไร?",
+                        a: `<p>VPN (Virtual Private Network) สร้าง "อุโมงค์" ที่มีการเข้ารหัส (Encrypted Tunnel) ผ่านเครือข่ายสาธารณะ</p>
+                           <p class="mt-4"><strong>ประโยชน์:</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>การรักษาความลับ (Confidentiality):</strong> เข้ารหัสข้อมูลทั้งหมด ป้องกันการดักฟัง</li>
+                               <li><strong>การรักษาความสมบูรณ์ (Integrity):</strong> ป้องกันข้อมูลถูกแก้ไขระหว่างทาง</li>
+                           </ul>
+                           <p class="mt-4"><strong>สถานการณ์สำคัญ:</strong> การทำงานจากระยะไกล (Remote Work), การใช้ Wi-Fi สาธารณะ, การเชื่อมต่อระหว่างสาขา (Site-to-Site)</p>`
+                    },
+                    "4": {
+                        q: "ความเสี่ยงด้านความปลอดภัยในเครือข่าย Wi-Fi และมาตรการลดความเสี่ยง",
+                        a: `<p class="font-semibold">ความเสี่ยง:</p>
+                           <ul class="list-disc list-inside space-y-2 mb-4">
+                               <li><strong>การดักฟังข้อมูล (Eavesdropping):</strong> หากไม่มีการเข้ารหัสที่แข็งแกร่ง</li>
+                               <li><strong>Evil Twin:</strong> ผู้โจมตีสร้าง Wi-Fi ปลอมชื่อเหมือนของจริงเพื่อหลอกให้เชื่อมต่อ</li>
+                               <li><strong>Deauthentication Attack:</strong> ผู้โจมตีส่งแพ็กเกตปลอมเพื่อตัดการเชื่อมต่อของผู้ใช้</li>
+                           </ul>
+                           <p class="font-semibold">มาตรการลดความเสี่ยง:</p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li>ใช้การเข้ารหัสที่แข็งแกร่ง: <strong>WPA3</strong> หรือ WPA2-AES</li>
+                               <li>ใช้การยืนยันตัวตนระดับองค์กร (WPA3-Enterprise / 802.1X)</li>
+                               <li>แยกเครือข่ายสำหรับแขก (Guest Network Segmentation)</li>
+                           </ul>`
+                    },
+                    "5": {
+                        q: "Load Balancer มีหลักการทำงานอย่างไร?",
+                        a: `<p>Load Balancer ทำหน้าที่เป็น "ผู้จัดการจราจร" สำหรับคำร้องขอที่เข้ามายังกลุ่มของเซิร์ฟเวอร์ โดยจะรับคำร้องขอไว้ที่ตัวเอง แล้วส่งต่อไปยังเซิร์ฟเวอร์ที่เหมาะสมที่สุดในกลุ่ม</p>
+                           <p class="mt-4"><strong>เกณฑ์ที่ใช้ในการตัดสินใจ (Scheduling Algorithms):</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>Round Robin:</strong> กระจายงานไปยังเซิร์ฟเวอร์แต่ละตัวตามลำดับวนไปเรื่อยๆ</li>
+                               <li><strong>Least Connections:</strong> ส่งงานไปยังเซิร์ฟเวอร์ที่มีจำนวนการเชื่อมต่อน้อยที่สุด</li>
+                               <li><strong>Source IP Affinity (Session Persistence):</strong> ส่งคำร้องขอจาก IP เดียวกันไปยังเซิร์ฟเวอร์ตัวเดิมเสมอ (จำเป็นสำหรับเว็บที่ต้องรักษาสถานะ เช่น ตะกร้าสินค้า)</li>
+                           </ul>`
+                    }
+                }
+            },
+            "10": {
+                title: "บทที่ 10: Network Security Appliances",
+                questions: {
+                    "1": {
+                        q: "อธิบายความแตกต่างระหว่าง Packet Filtering Firewall และ Stateful Inspection Firewall",
+                        a: `<table>
+                                <thead>
+                                    <tr><th>ลักษณะ</th><th>Packet Filtering (Stateless)</th><th>Stateful Inspection</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>หลักการทำงาน</strong></td>
+                                        <td>ตรวจสอบแพ็กเก็ตแต่ละตัว <strong>แบบแยกจากกัน</strong> โดยดูจาก IP และ Port เท่านั้น</td>
+                                        <td>ตรวจสอบแพ็กเก็ตโดย <strong>ติดตามสถานะของการเชื่อมต่อ (Connection State)</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ข้อดี</strong></td>
+                                        <td>รวดเร็ว, ต้นทุนต่ำ</td>
+                                        <td><strong>ปลอดภัยกว่ามาก</strong>, สามารถป้องกันการโจมตีที่ซับซ้อนได้ดีกว่า</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ข้อเสีย</strong></td>
+                                        <td><strong>ความปลอดภัยต่ำ</strong>, ไม่สามารถป้องกันการโจมตีที่อาศัยการปลอมแปลงสถานะการเชื่อมต่อได้</td>
+                                        <td>ใช้ทรัพยากรมากกว่า, อาจช้ากว่าเล็กน้อย</td>
+                                    </tr>
+                                </tbody>
+                            </table>`
+                    }
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const navMenu = document.getElementById('navigation-menu');
+            const contentDisplay = document.getElementById('content-display');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('app-overlay');
+
+            // Clear initial content
+            contentDisplay.innerHTML = '';
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const id = entry.target.getAttribute('id');
+                    const navLink = document.querySelector(`nav a[href="#${id}"]`);
+                    if (entry.isIntersecting) {
+                        document.querySelectorAll('nav a').forEach(link => link.classList.remove('active-nav'));
+                        if (navLink) {
+                            navLink.classList.add('active-nav');
+                        }
+                    }
+                });
+            }, { rootMargin: "-40% 0px -60% 0px" });
+
+            Object.keys(studyGuideData).forEach(chapterId => {
+                const chapter = studyGuideData[chapterId];
+                
+                // --- Build Sidebar ---
+                const chapterEl = document.createElement('div');
+                chapterEl.textContent = chapter.title;
+                chapterEl.className = 'sidebar-chapter p-2 rounded-md font-semibold';
+                navMenu.appendChild(chapterEl);
+                
+                const questionList = document.createElement('ul');
+                questionList.className = 'question-list pl-4 mt-1';
+                navMenu.appendChild(questionList);
+
+                // --- Build Main Content ---
+                const chapterHeader = document.createElement('h2');
+                chapterHeader.className = 'text-3xl font-bold mt-12 mb-6 pb-2 border-b-2 border-[#81B29A]';
+                chapterHeader.textContent = chapter.title;
+                chapterHeader.id = `ch-${chapterId}`;
+                contentDisplay.appendChild(chapterHeader);
+
+                Object.keys(chapter.questions).forEach(questionId => {
+                    const questionData = chapter.questions[questionId];
+                    const anchorId = `q-${chapterId}-${questionId}`;
+
+                    // Add question link to sidebar
+                    const questionLi = document.createElement('li');
+                    const questionLink = document.createElement('a');
+                    questionLink.textContent = `คำถาม ${chapterId}.${questionId}`;
+                    questionLink.className = 'sidebar-question block p-2 rounded-md text-sm hover:bg-gray-100';
+                    questionLink.href = `#${anchorId}`;
+                    questionLi.appendChild(questionLink);
+                    questionList.appendChild(questionLi);
+
+                    // Add question content to main area
+                    const questionContainer = document.createElement('div');
+                    questionContainer.id = anchorId;
+                    questionContainer.className = 'pt-8 -mt-8'; // Padding for anchor offset
+
+                    const questionTitleEl = document.createElement('h3');
+                    questionTitleEl.className = 'text-2xl font-bold mb-2';
+                    questionTitleEl.textContent = `คำถาม ${chapterId}.${questionId}: ${questionData.q}`;
+                    
+                    const questionAnswerEl = document.createElement('div');
+                    questionAnswerEl.className = 'prose max-w-none text-gray-700 leading-relaxed mb-8';
+                    questionAnswerEl.innerHTML = questionData.a;
+                    
+                    questionContainer.appendChild(questionTitleEl);
+                    questionContainer.appendChild(questionAnswerEl);
+                    contentDisplay.appendChild(questionContainer);
+                    
+                    observer.observe(questionContainer);
+                });
+            });
+
+            // Smooth scroll for sidebar links
+            navMenu.addEventListener('click', (e) => {
+                if (e.target.tagName === 'A') {
+                    e.preventDefault();
+                    const targetId = e.target.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth' });
+                    }
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('open');
+                        overlay.classList.remove('open');
+                    }
+                }
+            });
+
+            mobileMenuButton.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('open');
+            });
+
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('open');
+            });
+
+            // Set first link as active initially
+            const firstLink = document.querySelector('nav a');
+            if(firstLink) firstLink.classList.add('active-nav');
+        });
+    </script>
+</body>
+</ht
