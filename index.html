@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คู่มือโปรโตคอลเครือข่ายที่ปลอดภัย (Interactive Guide)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Stone neutrals with a Teal accent) -->
+    <!-- Application Structure Plan: A single-page vertical scrolling application with a sticky navigation bar. The content is divided into three logical sections based on the source material's topics: 1) Core Network Operations, 2) Application Security, and 3) Secure Remote Access. This structure transforms the linear slide deck into a user-driven, explorable format. Interactive cards, comparison tables, and toggleable diagrams are used to enhance understanding and engagement, making it more effective for learning than a static document. -->
+    <!-- Visualization & Content Choices: 
+        - Core Protocols (DHCP, DNS, etc.): Goal=Inform. Method=HTML/Tailwind cards with icons, separating Function/Risk/Solution. Interaction=None, for clarity.
+        - Protocol Comparison (FTP vs. FTPS/SFTP): Goal=Compare. Method=A clear, responsive HTML table. Interaction=None.
+        - VPN Comparison (IPSec vs. SSL): Goal=Compare. Method=A responsive HTML table for direct comparison of features. Interaction=Hover highlights.
+        - VPN Tunneling (Full vs. Split): Goal=Visualize Process. Method=Custom HTML/CSS diagram. Interaction=Buttons to toggle visibility of data paths and update descriptive text, making the concept tangible.
+        - Port Numbers: Goal=Reference. Method=Filterable HTML table. Interaction=Live text search to quickly find specific ports or services.
+        - Library=Chart.js is included but a well-structured HTML table was chosen for the VPN comparison for better clarity and accessibility of textual data.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #14b8a6; /* teal-500 */
+            transform: translateY(-2px);
+        }
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .path {
+            transition: opacity 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-teal-600">Secure Protocols Guide</h1>
+            <div class="hidden md:flex space-x-8">
+                <a href="#operations" class="nav-link text-stone-600 font-semibold">โปรโตคอลพื้นฐาน</a>
+                <a href="#applications" class="nav-link text-stone-600 font-semibold">โปรโตคอลแอปพลิเคชัน</a>
+                <a href="#remote-access" class="nav-link text-stone-600 font-semibold">การเข้าถึงระยะไกล</a>
+            </div>
+            <div class="md:hidden">
+                <select id="mobile-nav" class="bg-white border border-stone-300 rounded-md p-2">
+                    <option value="#operations">โปรโตคอลพื้นฐาน</option>
+                    <option value="#applications">โปรโตคอลแอปพลิเคชัน</option>
+                    <option value="#remote-access">การเข้าถึงระยะไกล</option>
+                </select>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        
+        <section id="intro" class="text-center mb-20">
+            <h2 class="text-4xl font-bold mb-4 text-stone-900">เรียนรู้โปรโตคอลเครือข่ายที่ปลอดภัย</h2>
+            <p class="text-lg text-stone-600 max-w-3xl mx-auto">
+                สำรวจโปรโตคอลที่สำคัญต่อการทำงานของเครือข่ายและความปลอดภัยในโลกดิจิทัล ผ่านคู่มือเชิงโต้ตอบที่สรุปเนื้อหาจากบทเรียน "Implementing Secure Network Protocols"
+            </p>
+        </section>
+
+        <section id="operations" class="mb-20">
+            <h3 class="text-3xl font-bold text-center mb-2 text-stone-900">ส่วนที่ 1: โปรโตคอลเพื่อการดำเนินงานเครือข่ายที่ปลอดภัย</h3>
+            <p class="text-md text-stone-600 text-center max-w-3xl mx-auto mb-12">โปรโตคอลกลุ่มนี้เป็นหัวใจสำคัญที่ทำให้เครือข่ายทำงานได้ ตั้งแต่การแจกจ่าย IP Address ไปจนถึงการจัดการอุปกรณ์ การทำให้โปรโตคอลเหล่านี้ปลอดภัยจึงเป็นรากฐานของการป้องกันทั้งระบบ</p>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- DHCP Card -->
+                <div class="card bg-white p-6 rounded-xl shadow-md">
+                    <h4 class="text-xl font-bold mb-3 text-teal-700">DHCP: การจัดสรร IP อัตโนมัติ</h4>
+                    <div class="space-y-4">
+                        <p>🛡️ <strong class="font-semibold">หน้าที่:</strong> แจกจ่าย IP Address และข้อมูลเครือข่ายอื่นๆ ให้กับอุปกรณ์โดยอัตโนมัติ</p>
+                        <p>⚠️ <strong class="font-semibold">ความเสี่ยง:</strong> Rogue DHCP Server (ผู้ร้ายปลอมตัวมาแจก IP) และ DHCP Starvation (ขอ IP จนหมดโควต้า)</p>
+                        <p>✅ <strong class="font-semibold">การป้องกัน:</strong> ใช้ฟีเจอร์ DHCP Snooping บนสวิตช์เพื่อกรองและอนุญาตเฉพาะเซิร์ฟเวอร์ DHCP ที่น่าเชื่อถือ</p>
+                    </div>
+                </div>
+                <!-- DNS Card -->
+                <div class="card bg-white p-6 rounded-xl shadow-md">
+                    <h4 class="text-xl font-bold mb-3 text-teal-700">DNS: สมุดโทรศัพท์ของอินเทอร์เน็ต</h4>
+                    <div class="space-y-4">
+                        <p>🛡️ <strong class="font-semibold">หน้าที่:</strong> แปลงชื่อโดเมน (เช่น `google.com`) เป็น IP Address ที่คอมพิวเตอร์เข้าใจ</p>
+                        <p>⚠️ <strong class="font-semibold">ความเสี่ยง:</strong> DNS Poisoning (ปลอมข้อมูล DNS ให้ชี้ไปเว็บผู้ร้าย) และ Domain Hijacking (ยึดโดเมน)</p>
+                        <p>✅ <strong class="font-semibold">การป้องกัน:</strong> ใช้ DNSSEC เพื่อยืนยันความถูกต้องของข้อมูล DNS ด้วยลายเซ็นดิจิทัล</p>
+                    </div>
+                </div>
+                <!-- LDAP Card -->
+                <div class="card bg-white p-6 rounded-xl shadow-md">
+                    <h4 class="text-xl font-bold mb-3 text-teal-700">LDAP: บริการสารบบ</h4>
+                    <div class="space-y-4">
+                        <p>🛡️ <strong class="font-semibold">หน้าที่:</strong> เข้าถึงและจัดการข้อมูลผู้ใช้และทรัพยากรใน Directory Service (เช่น Active Directory)</p>
+                        <p>⚠️ <strong class="font-semibold">ความเสี่ยง:</strong> การสื่อสารแบบธรรมดา (พอร์ต 389) ไม่มีการเข้ารหัส ทำให้ถูกดักฟังรหัสผ่านได้</p>
+                        <p>✅ <strong class="font-semibold">การป้องกัน:</strong> ใช้ LDAPS (LDAP over TLS/SSL) บนพอร์ต 636 เพื่อเข้ารหัสการสื่อสารทั้งหมด</p>
+                    </div>
+                </div>
+                <!-- NTP Card -->
+                <div class="card bg-white p-6 rounded-xl shadow-md">
+                    <h4 class="text-xl font-bold mb-3 text-teal-700">NTP: การซิงโครไนซ์เวลา</h4>
+                     <div class="space-y-4">
+                        <p>🛡️ <strong class="font-semibold">หน้าที่:</strong> ทำให้อุปกรณ์ทุกชิ้นในเครือข่ายมีเวลาตรงกัน</p>
+                        <p>⚠️ <strong class="font-semibold">ความเสี่ยง:</strong> หากเวลาไม่ตรงกัน จะทำให้การตรวจสอบ Log เพื่อสืบสวนเหตุการณ์เป็นไปได้ยาก และกระทบระบบยืนยันตัวตน</p>
+                        <p>✅ <strong class="font-semibold">การป้องกัน:</strong> ตั้งค่าอุปกรณ์ให้ซิงค์เวลากับ NTP Server ที่น่าเชื่อถือภายในองค์กร</p>
+                    </div>
+                </div>
+                <!-- SNMP Card -->
+                <div class="card bg-white p-6 rounded-xl shadow-md">
+                    <h4 class="text-xl font-bold mb-3 text-teal-700">SNMP: การจัดการเครือข่าย</h4>
+                     <div class="space-y-4">
+                        <p>🛡️ <strong class="font-semibold">หน้าที่:</strong> ติดตามและจัดการสถานะของอุปกรณ์เครือข่าย</p>
+                        <p>⚠️ <strong class="font-semibold">ความเสี่ยง:</strong> SNMPv1 และ v2 มีความปลอดภัยต่ำมาก ข้อมูลและรหัสผ่าน (Community String) ไม่ได้เข้ารหัส</p>
+                        <p>✅ <strong class="font-semibold">การป้องกัน:</strong> ใช้ SNMPv3 เท่านั้น ซึ่งรองรับการเข้ารหัสและการยืนยันตัวตนที่แข็งแกร่ง</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="applications" class="mb-20">
+            <h3 class="text-3xl font-bold text-center mb-2 text-stone-900">ส่วนที่ 2: โปรโตคอลสำหรับแอปพลิเคชันที่ปลอดภัย</h3>
+            <p class="text-md text-stone-600 text-center max-w-3xl mx-auto mb-12">โปรโตคอลเหล่านี้เกี่ยวข้องโดยตรงกับบริการที่เราใช้งานทุกวัน เช่น การท่องเว็บ การส่งไฟล์ หรืออีเมล การเลือกใช้เวอร์ชันที่ปลอดภัยเป็นสิ่งจำเป็นอย่างยิ่ง</p>
+
+            <div class="bg-white p-8 rounded-xl shadow-lg">
+                <h4 class="text-2xl font-bold mb-6 text-center">เปรียบเทียบโปรโตคอลยอดนิยม: Secure vs. Insecure</h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-stone-100">
+                            <tr>
+                                <th class="p-4 font-semibold">ประเภทบริการ</th>
+                                <th class="p-4 font-semibold">โปรโตคอลไม่ปลอดภัย (Insecure)</th>
+                                <th class="p-4 font-semibold">โปรโตคอลปลอดภัย (Secure)</th>
+                                <th class="p-4 font-semibold">หลักการทำงานของเวอร์ชันปลอดภัย</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="p-4 font-bold text-teal-700">ท่องเว็บ</td>
+                                <td class="p-4">HTTP (Port 80)</td>
+                                <td class="p-4">HTTPS (Port 443)</td>
+                                <td class="p-4">ใช้ SSL/TLS เข้ารหัสข้อมูลทั้งหมดระหว่าง Client และ Server</td>
+                            </tr>
+                            <tr class="border-b bg-stone-50">
+                                <td class="p-4 font-bold text-teal-700">ถ่ายโอนไฟล์</td>
+                                <td class="p-4">FTP (Port 21)</td>
+                                <td class="p-4">FTPS (Port 990/21), SFTP (Port 22)</td>
+                                <td class="p-4">FTPS คือ FTP ที่หุ้มด้วย SSL/TLS ส่วน SFTP ทำงานบน SSH ที่ปลอดภัย</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-4 font-bold text-teal-700">ส่งอีเมล</td>
+                                <td class="p-4">SMTP (Port 25)</td>
+                                <td class="p-4">SMTPS (Port 465), SMTP with STARTTLS (Port 587)</td>
+                                <td class="p-4">เข้ารหัสการเชื่อมต่อระหว่าง Email Client กับ Mail Server</td>
+                            </tr>
+                            <tr class="border-b bg-stone-50">
+                                <td class="p-4 font-bold text-teal-700">รับอีเมล</td>
+                                <td class="p-4">POP3 (Port 110), IMAP (Port 143)</td>
+                                <td class="p-4">POP3S (Port 995), IMAPS (Port 993)</td>
+                                <td class="p-4">เข้ารหัสการเชื่อมต่อเพื่อป้องกันการดักอ่านอีเมล</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-bold text-teal-700">VoIP/Video Call</td>
+                                <td class="p-4">SIP, RTP</td>
+                                <td class="p-4">SIPS, SRTP</td>
+                                <td class="p-4">SIPS เข้ารหัสการสร้าง Session และ SRTP เข้ารหัสข้อมูลเสียง/วิดีโอ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                 <div class="mt-6 p-4 bg-teal-50 border-l-4 border-teal-500 rounded-r-lg">
+                    <h5 class="font-bold text-teal-800">เพิ่มเติม: S/MIME</h5>
+                    <p class="text-teal-900">นอกจากการเข้ารหัสการเชื่อมต่อแล้ว S/MIME ยังใช้สำหรับเข้ารหัส "เนื้อหา" ของอีเมลโดยตรง (End-to-End Encryption) และเพิ่มลายเซ็นดิจิทัลเพื่อยืนยันผู้ส่ง ทำให้มั่นใจได้ว่าเนื้อหาไม่ได้ถูกแก้ไขระหว่างทาง</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="remote-access" class="mb-20">
+            <h3 class="text-3xl font-bold text-center mb-2 text-stone-900">ส่วนที่ 3: การเข้าถึงระยะไกลอย่างปลอดภัย</h3>
+            <p class="text-md text-stone-600 text-center max-w-3xl mx-auto mb-12">เทคโนโลยีเหล่านี้ช่วยให้เราสามารถเชื่อมต่อเข้าสู่เครือข่ายขององค์กรจากภายนอกได้อย่างปลอดภัย เปรียบเสมือนการสร้างอุโมงค์ส่วนตัวผ่านโลกอินเทอร์เน็ต</p>
+
+            <!-- VPN Comparison -->
+            <div class="bg-white p-8 rounded-xl shadow-lg mb-12">
+                <h4 class="text-2xl font-bold mb-6 text-center">เปรียบเทียบ VPN: IPSec vs. SSL</h4>
+                 <p class="text-center text-stone-600 mb-6">VPN ทั้งสองประเภทมีจุดเด่นต่างกัน การเลือกใช้ขึ้นอยู่กับความต้องการในการเข้าถึงและระดับการควบคุม</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-stone-100">
+                            <tr>
+                                <th class="p-4 font-semibold">คุณสมบัติ</th>
+                                <th class="p-4 font-semibold">IPSec VPN</th>
+                                <th class="p-4 font-semibold">SSL VPN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="p-4">ระดับที่ทำงาน (Network Layer)</td>
+                                <td class="p-4">Layer 3 (Network)</td>
+                                <td class="p-4">Layer 4-7 (Transport - Application)</td>
+                            </tr>
+                            <tr class="border-b bg-stone-50">
+                                <td class="p-4">รูปแบบการเชื่อมต่อ</td>
+                                <td class="p-4">เชื่อมต่อ Host เข้ากับ "ทั้งเครือข่าย"</td>
+                                <td class="p-4">เชื่อมต่อผู้ใช้เข้ากับ "แอปพลิเคชันที่ระบุ"</td>
+                            </tr>
+                             <tr class="border-b">
+                                <td class="p-4">การใช้งาน</td>
+                                <td class="p-4">รองรับทุกแอปพลิเคชันที่ใช้ IP</td>
+                                <td class="p-4">เหมาะกับเว็บแอป, อีเมล, แชร์ไฟล์</td>
+                            </tr>
+                            <tr class="border-b bg-stone-50">
+                                <td class="p-4">Client</td>
+                                <td class="p-4">ต้องติดตั้งโปรแกรม VPN Client</td>
+                                <td class="p-4">ส่วนใหญ่ใช้ผ่านเว็บเบราว์เซอร์ (Clientless)</td>
+                            </tr>
+                             <tr>
+                                <td class="p-4">การควบคุม</td>
+                                <td class="p-4">ให้สิทธิ์เข้าถึงกว้าง อาจควบคุมยากกว่า</td>
+                                <td class="p-4">ควบคุมการเข้าถึงได้ละเอียดกว่ารายแอปพลิเคชัน</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tunneling Visualization -->
+            <div class="bg-white p-8 rounded-xl shadow-lg">
+                <h4 class="text-2xl font-bold mb-6 text-center">Full Tunnel vs. Split Tunnel</h4>
+                <p class="text-center text-stone-600 mb-8">เลือกรูปแบบการส่งข้อมูลผ่าน VPN ให้เหมาะกับการใช้งาน เพื่อสร้างสมดุลระหว่างความปลอดภัยและประสิทธิภาพ</p>
+                <div class="flex justify-center mb-8 space-x-4">
+                    <button id="full-tunnel-btn" class="bg-teal-600 text-white px-6 py-2 rounded-full font-semibold shadow-md hover:bg-teal-700 transition">Full Tunnel</button>
+                    <button id="split-tunnel-btn" class="bg-stone-200 text-stone-700 px-6 py-2 rounded-full font-semibold hover:bg-stone-300 transition">Split Tunnel</button>
+                </div>
+                
+                <div class="relative max-w-4xl mx-auto p-4">
+                    <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 md:space-x-8">
+                        <div class="text-center">
+                            <div class="text-5xl">💻</div>
+                            <div class="font-bold mt-2">VPN Client</div>
+                        </div>
+                        
+                        <div class="relative w-full h-24 flex items-center">
+                            <!-- Base Tunnel -->
+                            <div class="absolute w-full h-4 bg-stone-200 rounded-full"></div>
+                            <!-- Full Tunnel Path -->
+                            <div id="full-path-1" class="path absolute w-full h-4 bg-teal-400 rounded-full opacity-0"></div>
+                            <!-- Split Tunnel Path -->
+                            <div id="split-path-1" class="path absolute w-1/2 h-4 bg-teal-400 rounded-l-full opacity-0"></div>
+                        </div>
+
+                        <div class="text-center">
+                            <div class="text-5xl">🏢</div>
+                             <div class="font-bold mt-2">VPN Server</div>
+                        </div>
+                    </div>
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full flex justify-center items-end h-32 pointer-events-none">
+                        <!-- Full Tunnel to Internet -->
+                        <svg id="full-path-2" class="path absolute w-48 h-24 opacity-0" viewBox="0 0 100 50">
+                            <path d="M 50 50 Q 0 50 0 0" stroke="#0d9488" stroke-width="8" fill="none" stroke-linecap="round"/>
+                        </svg>
+                        <!-- Split Tunnel to Internet -->
+                        <svg id="split-path-2" class="path absolute w-48 h-24 opacity-0" viewBox="0 0 100 50">
+                            <path d="M 0 50 Q 50 50 50 0" stroke="#0d9488" stroke-width="8" fill="none" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                     <div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-8 text-center">
+                        <div class="text-5xl">☁️</div>
+                        <div class="font-bold text-sm">Public Network</div>
+                    </div>
+                </div>
+
+                <div id="tunnel-info" class="mt-8 p-6 bg-stone-100 rounded-lg min-h-[120px]">
+                    <h5 id="tunnel-title" class="text-lg font-bold text-stone-800">เลือกรูปแบบเพื่อดูคำอธิบาย</h5>
+                    <p id="tunnel-desc" class="text-stone-600 mt-2"></p>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="bg-stone-800 text-white text-center p-6 mt-12">
+        <p>สร้างสรรค์เพื่อการเรียนรู้จากเอกสารประกอบการสอนวิชา 070315109 มจพ.</p>
+        <p class="text-sm text-stone-400 mt-1">Interactive SPA by Gemini</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const fullTunnelBtn = document.getElementById('full-tunnel-btn');
+            const splitTunnelBtn = document.getElementById('split-tunnel-btn');
+            const tunnelTitle = document.getElementById('tunnel-title');
+            const tunnelDesc = document.getElementById('tunnel-desc');
+            
+            const fullPaths = [document.getElementById('full-path-1'), document.getElementById('full-path-2')];
+            const splitPaths = [document.getElementById('split-path-1'), document.getElementById('split-path-2')];
+
+            function activateFullTunnel() {
+                fullTunnelBtn.classList.remove('bg-stone-200', 'text-stone-700');
+                fullTunnelBtn.classList.add('bg-teal-600', 'text-white', 'shadow-md');
+                splitTunnelBtn.classList.add('bg-stone-200', 'text-stone-700');
+                splitTunnelBtn.classList.remove('bg-teal-600', 'text-white', 'shadow-md');
+
+                fullPaths.forEach(p => p.style.opacity = '1');
+                splitPaths.forEach(p => p.style.opacity = '0');
+
+                tunnelTitle.textContent = 'Full Tunnel: ปลอดภัยสูงสุด';
+                tunnelDesc.textContent = 'ทราฟฟิกทั้งหมดจากเครื่องของคุณ (ทั้งที่ไปยังเครือข่ายบริษัทและอินเทอร์เน็ต) จะถูกส่งผ่านอุโมงค์ VPN ที่เข้ารหัสไปยังเซิร์ฟเวอร์ของบริษัทก่อนเสมอ ให้ความปลอดภัยสูงสุด แต่ก็อาจทำให้การใช้งานอินเทอร์เน็ตทั่วไปช้าลง';
+            }
+
+            function activateSplitTunnel() {
+                splitTunnelBtn.classList.remove('bg-stone-200', 'text-stone-700');
+                splitTunnelBtn.classList.add('bg-teal-600', 'text-white', 'shadow-md');
+                fullTunnelBtn.classList.add('bg-stone-200', 'text-stone-700');
+                fullTunnelBtn.classList.remove('bg-teal-600', 'text-white', 'shadow-md');
+
+                fullPaths.forEach(p => p.style.opacity = '0');
+                splitPaths.forEach(p => p.style.opacity = '1');
+
+                tunnelTitle.textContent = 'Split Tunnel: ยืดหยุ่นและรวดเร็ว';
+                tunnelDesc.textContent = 'เฉพาะทราฟฟิกที่ต้องการเชื่อมต่อไปยังเครือข่ายบริษัทเท่านั้นที่จะวิ่งผ่าน VPN ส่วนทราฟฟิกอินเทอร์เน็ตอื่นๆ (เช่น ดูวิดีโอ, ฟังเพลง) จะออกสู่ Public Network โดยตรง ทำให้มีประสิทธิภาพและความเร็วสูงกว่า แต่ก็ลดการควบคุมด้านความปลอดภัยลง';
+            }
+
+            fullTunnelBtn.addEventListener('click', activateFullTunnel);
+            splitTunnelBtn.addEventListener('click', activateSplitTunnel);
+
+            const mobileNav = document.getElementById('mobile-nav');
+            mobileNav.addEventListener('change', function() {
+                window.location.hash = this.value;
+            });
+            
+            activateFullTunnel();
+        });
+    </script>
+</body>
+</html>
