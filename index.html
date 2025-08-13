@@ -3,349 +3,935 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>คู่มือโปรโตคอลเครือข่ายที่ปลอดภัย (Interactive Guide)</title>
+    <title>สรุปทบทวนสอบกลางภาค - ความมั่นคงปลอดภัยสารสนเทศ</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Calm Harmony (Stone neutrals with a Teal accent) -->
-    <!-- Application Structure Plan: A single-page vertical scrolling application with a sticky navigation bar. The content is divided into three logical sections based on the source material's topics: 1) Core Network Operations, 2) Application Security, and 3) Secure Remote Access. This structure transforms the linear slide deck into a user-driven, explorable format. Interactive cards, comparison tables, and toggleable diagrams are used to enhance understanding and engagement, making it more effective for learning than a static document. -->
-    <!-- Visualization & Content Choices: 
-        - Core Protocols (DHCP, DNS, etc.): Goal=Inform. Method=HTML/Tailwind cards with icons, separating Function/Risk/Solution. Interaction=None, for clarity.
-        - Protocol Comparison (FTP vs. FTPS/SFTP): Goal=Compare. Method=A clear, responsive HTML table. Interaction=None.
-        - VPN Comparison (IPSec vs. SSL): Goal=Compare. Method=A responsive HTML table for direct comparison of features. Interaction=Hover highlights.
-        - VPN Tunneling (Full vs. Split): Goal=Visualize Process. Method=Custom HTML/CSS diagram. Interaction=Buttons to toggle visibility of data paths and update descriptive text, making the concept tangible.
-        - Port Numbers: Goal=Reference. Method=Filterable HTML table. Interaction=Live text search to quickly find specific ports or services.
-        - Library=Chart.js is included but a well-structured HTML table was chosen for the VPN comparison for better clarity and accessibility of textual data.
-    -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Off-white, Muted Blue/Green Accents) -->
+    <!-- Application Structure Plan: A two-column SPA. Left sidebar for chapter/question navigation, enabling quick topic switching. Right content area dynamically displays the selected Q&A. This structure is optimal for a study guide, prioritizing fast, non-linear access to information over a narrative flow. Interactions are focused on content filtering via the sidebar. -->
+    <!-- Visualization & Content Choices: Content is primarily text. Report Info: Comparison tables (e.g., Symmetric vs. Asymmetric Crypto). Goal: Compare. Viz/Presentation: HTML tables with clear styling. Interaction: Static display. Justification: Tables are the clearest way to present direct comparisons. Report Info: Process flows (e.g., Security Assessment Steps). Goal: Organize. Viz/Presentation: Numbered HTML lists. Interaction: Static display. Justification: Simple, clear presentation for sequential information. NO SVG/Mermaid used. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Sarabun', sans-serif;
-            scroll-behavior: smooth;
+            background-color: #FDFBF8;
+            color: #3D405B;
         }
-        .chart-container {
-            position: relative;
+        .active-nav {
+            background-color: #E0EADF;
+            color: #3D405B;
+            font-weight: 700;
+        }
+        .sidebar-chapter {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .sidebar-question {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .content-card {
+            background-color: #FFFFFF;
+            border: 1px solid #F0EBE3;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        table {
             width: 100%;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 400px;
-            max-height: 50vh;
+            border-collapse: collapse;
+            margin-top: 1rem;
         }
-        .nav-link {
-            transition: all 0.3s ease;
+        th, td {
+            border: 1px solid #E0EADF;
+            padding: 0.75rem;
+            text-align: left;
         }
-        .nav-link:hover, .nav-link.active {
-            color: #14b8a6; /* teal-500 */
-            transform: translateY(-2px);
+        th {
+            background-color: #F0EBE3;
+            font-weight: 700;
         }
-        .card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        tr:nth-child(even) {
+            background-color: #F7F5F2;
         }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        .mobile-menu-btn {
+            display: none;
         }
-        .path {
-            transition: opacity 0.5s ease-in-out;
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 80%;
+                height: 100%;
+                z-index: 50;
+                transition: left 0.3s ease-in-out;
+                box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+            }
+            .sidebar.open {
+                left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+            .mobile-menu-btn {
+                display: block;
+                position: fixed;
+                top: 1rem;
+                left: 1rem;
+                z-index: 60;
+            }
+            .overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.5);
+                z-index: 40;
+                display: none;
+            }
+            .overlay.open {
+                display: block;
+            }
         }
     </style>
 </head>
-<body class="bg-stone-50 text-stone-800">
+<body>
+    <div id="app-overlay" class="overlay"></div>
+    <button id="mobile-menu-button" class="mobile-menu-btn p-2 rounded-md bg-white text-gray-700 shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+        </svg>
+    </button>
 
-    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
-        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="text-xl md:text-2xl font-bold text-teal-600">Secure Protocols Guide</h1>
-            <div class="hidden md:flex space-x-8">
-                <a href="#operations" class="nav-link text-stone-600 font-semibold">โปรโตคอลพื้นฐาน</a>
-                <a href="#applications" class="nav-link text-stone-600 font-semibold">โปรโตคอลแอปพลิเคชัน</a>
-                <a href="#remote-access" class="nav-link text-stone-600 font-semibold">การเข้าถึงระยะไกล</a>
-            </div>
-            <div class="md:hidden">
-                <select id="mobile-nav" class="bg-white border border-stone-300 rounded-md p-2">
-                    <option value="#operations">โปรโตคอลพื้นฐาน</option>
-                    <option value="#applications">โปรโตคอลแอปพลิเคชัน</option>
-                    <option value="#remote-access">การเข้าถึงระยะไกล</option>
-                </select>
-            </div>
-        </nav>
-    </header>
+    <div class="flex min-h-screen">
+        <aside id="sidebar" class="sidebar w-1/4 md:w-1/5 bg-white border-r border-gray-200 p-4 overflow-y-auto">
+            <h1 class="text-xl font-bold mb-4 text-[#3D405B]">บทเรียน (1-10)</h1>
+            <nav id="navigation-menu"></nav>
+        </aside>
 
-    <main class="container mx-auto px-6 py-12">
-        
-        <section id="intro" class="text-center mb-20">
-            <h2 class="text-4xl font-bold mb-4 text-stone-900">เรียนรู้โปรโตคอลเครือข่ายที่ปลอดภัย</h2>
-            <p class="text-lg text-stone-600 max-w-3xl mx-auto">
-                สำรวจโปรโตคอลที่สำคัญต่อการทำงานของเครือข่ายและความปลอดภัยในโลกดิจิทัล ผ่านคู่มือเชิงโต้ตอบที่สรุปเนื้อหาจากบทเรียน "Implementing Secure Network Protocols"
-            </p>
-        </section>
-
-        <section id="operations" class="mb-20">
-            <h3 class="text-3xl font-bold text-center mb-2 text-stone-900">ส่วนที่ 1: โปรโตคอลเพื่อการดำเนินงานเครือข่ายที่ปลอดภัย</h3>
-            <p class="text-md text-stone-600 text-center max-w-3xl mx-auto mb-12">โปรโตคอลกลุ่มนี้เป็นหัวใจสำคัญที่ทำให้เครือข่ายทำงานได้ ตั้งแต่การแจกจ่าย IP Address ไปจนถึงการจัดการอุปกรณ์ การทำให้โปรโตคอลเหล่านี้ปลอดภัยจึงเป็นรากฐานของการป้องกันทั้งระบบ</p>
-            
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- DHCP Card -->
-                <div class="card bg-white p-6 rounded-xl shadow-md">
-                    <h4 class="text-xl font-bold mb-3 text-teal-700">DHCP: การจัดสรร IP อัตโนมัติ</h4>
-                    <div class="space-y-4">
-                        <p>🛡️ <strong class="font-semibold">หน้าที่:</strong> แจกจ่าย IP Address และข้อมูลเครือข่ายอื่นๆ ให้กับอุปกรณ์โดยอัตโนมัติ</p>
-                        <p>⚠️ <strong class="font-semibold">ความเสี่ยง:</strong> Rogue DHCP Server (ผู้ร้ายปลอมตัวมาแจก IP) และ DHCP Starvation (ขอ IP จนหมดโควต้า)</p>
-                        <p>✅ <strong class="font-semibold">การป้องกัน:</strong> ใช้ฟีเจอร์ DHCP Snooping บนสวิตช์เพื่อกรองและอนุญาตเฉพาะเซิร์ฟเวอร์ DHCP ที่น่าเชื่อถือ</p>
-                    </div>
-                </div>
-                <!-- DNS Card -->
-                <div class="card bg-white p-6 rounded-xl shadow-md">
-                    <h4 class="text-xl font-bold mb-3 text-teal-700">DNS: สมุดโทรศัพท์ของอินเทอร์เน็ต</h4>
-                    <div class="space-y-4">
-                        <p>🛡️ <strong class="font-semibold">หน้าที่:</strong> แปลงชื่อโดเมน (เช่น `google.com`) เป็น IP Address ที่คอมพิวเตอร์เข้าใจ</p>
-                        <p>⚠️ <strong class="font-semibold">ความเสี่ยง:</strong> DNS Poisoning (ปลอมข้อมูล DNS ให้ชี้ไปเว็บผู้ร้าย) และ Domain Hijacking (ยึดโดเมน)</p>
-                        <p>✅ <strong class="font-semibold">การป้องกัน:</strong> ใช้ DNSSEC เพื่อยืนยันความถูกต้องของข้อมูล DNS ด้วยลายเซ็นดิจิทัล</p>
-                    </div>
-                </div>
-                <!-- LDAP Card -->
-                <div class="card bg-white p-6 rounded-xl shadow-md">
-                    <h4 class="text-xl font-bold mb-3 text-teal-700">LDAP: บริการสารบบ</h4>
-                    <div class="space-y-4">
-                        <p>🛡️ <strong class="font-semibold">หน้าที่:</strong> เข้าถึงและจัดการข้อมูลผู้ใช้และทรัพยากรใน Directory Service (เช่น Active Directory)</p>
-                        <p>⚠️ <strong class="font-semibold">ความเสี่ยง:</strong> การสื่อสารแบบธรรมดา (พอร์ต 389) ไม่มีการเข้ารหัส ทำให้ถูกดักฟังรหัสผ่านได้</p>
-                        <p>✅ <strong class="font-semibold">การป้องกัน:</strong> ใช้ LDAPS (LDAP over TLS/SSL) บนพอร์ต 636 เพื่อเข้ารหัสการสื่อสารทั้งหมด</p>
-                    </div>
-                </div>
-                <!-- NTP Card -->
-                <div class="card bg-white p-6 rounded-xl shadow-md">
-                    <h4 class="text-xl font-bold mb-3 text-teal-700">NTP: การซิงโครไนซ์เวลา</h4>
-                     <div class="space-y-4">
-                        <p>🛡️ <strong class="font-semibold">หน้าที่:</strong> ทำให้อุปกรณ์ทุกชิ้นในเครือข่ายมีเวลาตรงกัน</p>
-                        <p>⚠️ <strong class="font-semibold">ความเสี่ยง:</strong> หากเวลาไม่ตรงกัน จะทำให้การตรวจสอบ Log เพื่อสืบสวนเหตุการณ์เป็นไปได้ยาก และกระทบระบบยืนยันตัวตน</p>
-                        <p>✅ <strong class="font-semibold">การป้องกัน:</strong> ตั้งค่าอุปกรณ์ให้ซิงค์เวลากับ NTP Server ที่น่าเชื่อถือภายในองค์กร</p>
-                    </div>
-                </div>
-                <!-- SNMP Card -->
-                <div class="card bg-white p-6 rounded-xl shadow-md">
-                    <h4 class="text-xl font-bold mb-3 text-teal-700">SNMP: การจัดการเครือข่าย</h4>
-                     <div class="space-y-4">
-                        <p>🛡️ <strong class="font-semibold">หน้าที่:</strong> ติดตามและจัดการสถานะของอุปกรณ์เครือข่าย</p>
-                        <p>⚠️ <strong class="font-semibold">ความเสี่ยง:</strong> SNMPv1 และ v2 มีความปลอดภัยต่ำมาก ข้อมูลและรหัสผ่าน (Community String) ไม่ได้เข้ารหัส</p>
-                        <p>✅ <strong class="font-semibold">การป้องกัน:</strong> ใช้ SNMPv3 เท่านั้น ซึ่งรองรับการเข้ารหัสและการยืนยันตัวตนที่แข็งแกร่ง</p>
-                    </div>
+        <main class="main-content w-3/4 md:w-4/5 p-4 md:p-8">
+            <div class="max-w-4xl mx-auto">
+                <header class="mb-8 text-center">
+                    <h1 class="text-3xl md:text-4xl font-bold text-[#81B29A]">สรุปทบทวนสอบกลางภาค</h1>
+                    <p class="text-lg text-gray-600 mt-2">วิชาความมั่นคงปลอดภัยเครือข่ายดิจิทัลและสารสนเทศ</p>
+                </header>
+                <div id="content-display" class="content-card rounded-lg p-6">
+                    <h2 class="text-2xl font-bold mb-2" id="question-title"></h2>
+                    <div id="question-answer" class="prose max-w-none text-gray-700 leading-relaxed"></div>
                 </div>
             </div>
-        </section>
-
-        <section id="applications" class="mb-20">
-            <h3 class="text-3xl font-bold text-center mb-2 text-stone-900">ส่วนที่ 2: โปรโตคอลสำหรับแอปพลิเคชันที่ปลอดภัย</h3>
-            <p class="text-md text-stone-600 text-center max-w-3xl mx-auto mb-12">โปรโตคอลเหล่านี้เกี่ยวข้องโดยตรงกับบริการที่เราใช้งานทุกวัน เช่น การท่องเว็บ การส่งไฟล์ หรืออีเมล การเลือกใช้เวอร์ชันที่ปลอดภัยเป็นสิ่งจำเป็นอย่างยิ่ง</p>
-
-            <div class="bg-white p-8 rounded-xl shadow-lg">
-                <h4 class="text-2xl font-bold mb-6 text-center">เปรียบเทียบโปรโตคอลยอดนิยม: Secure vs. Insecure</h4>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-stone-100">
-                            <tr>
-                                <th class="p-4 font-semibold">ประเภทบริการ</th>
-                                <th class="p-4 font-semibold">โปรโตคอลไม่ปลอดภัย (Insecure)</th>
-                                <th class="p-4 font-semibold">โปรโตคอลปลอดภัย (Secure)</th>
-                                <th class="p-4 font-semibold">หลักการทำงานของเวอร์ชันปลอดภัย</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="border-b">
-                                <td class="p-4 font-bold text-teal-700">ท่องเว็บ</td>
-                                <td class="p-4">HTTP (Port 80)</td>
-                                <td class="p-4">HTTPS (Port 443)</td>
-                                <td class="p-4">ใช้ SSL/TLS เข้ารหัสข้อมูลทั้งหมดระหว่าง Client และ Server</td>
-                            </tr>
-                            <tr class="border-b bg-stone-50">
-                                <td class="p-4 font-bold text-teal-700">ถ่ายโอนไฟล์</td>
-                                <td class="p-4">FTP (Port 21)</td>
-                                <td class="p-4">FTPS (Port 990/21), SFTP (Port 22)</td>
-                                <td class="p-4">FTPS คือ FTP ที่หุ้มด้วย SSL/TLS ส่วน SFTP ทำงานบน SSH ที่ปลอดภัย</td>
-                            </tr>
-                            <tr class="border-b">
-                                <td class="p-4 font-bold text-teal-700">ส่งอีเมล</td>
-                                <td class="p-4">SMTP (Port 25)</td>
-                                <td class="p-4">SMTPS (Port 465), SMTP with STARTTLS (Port 587)</td>
-                                <td class="p-4">เข้ารหัสการเชื่อมต่อระหว่าง Email Client กับ Mail Server</td>
-                            </tr>
-                            <tr class="border-b bg-stone-50">
-                                <td class="p-4 font-bold text-teal-700">รับอีเมล</td>
-                                <td class="p-4">POP3 (Port 110), IMAP (Port 143)</td>
-                                <td class="p-4">POP3S (Port 995), IMAPS (Port 993)</td>
-                                <td class="p-4">เข้ารหัสการเชื่อมต่อเพื่อป้องกันการดักอ่านอีเมล</td>
-                            </tr>
-                            <tr>
-                                <td class="p-4 font-bold text-teal-700">VoIP/Video Call</td>
-                                <td class="p-4">SIP, RTP</td>
-                                <td class="p-4">SIPS, SRTP</td>
-                                <td class="p-4">SIPS เข้ารหัสการสร้าง Session และ SRTP เข้ารหัสข้อมูลเสียง/วิดีโอ</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                 <div class="mt-6 p-4 bg-teal-50 border-l-4 border-teal-500 rounded-r-lg">
-                    <h5 class="font-bold text-teal-800">เพิ่มเติม: S/MIME</h5>
-                    <p class="text-teal-900">นอกจากการเข้ารหัสการเชื่อมต่อแล้ว S/MIME ยังใช้สำหรับเข้ารหัส "เนื้อหา" ของอีเมลโดยตรง (End-to-End Encryption) และเพิ่มลายเซ็นดิจิทัลเพื่อยืนยันผู้ส่ง ทำให้มั่นใจได้ว่าเนื้อหาไม่ได้ถูกแก้ไขระหว่างทาง</p>
-                </div>
-            </div>
-        </section>
-        
-        <section id="remote-access" class="mb-20">
-            <h3 class="text-3xl font-bold text-center mb-2 text-stone-900">ส่วนที่ 3: การเข้าถึงระยะไกลอย่างปลอดภัย</h3>
-            <p class="text-md text-stone-600 text-center max-w-3xl mx-auto mb-12">เทคโนโลยีเหล่านี้ช่วยให้เราสามารถเชื่อมต่อเข้าสู่เครือข่ายขององค์กรจากภายนอกได้อย่างปลอดภัย เปรียบเสมือนการสร้างอุโมงค์ส่วนตัวผ่านโลกอินเทอร์เน็ต</p>
-
-            <!-- VPN Comparison -->
-            <div class="bg-white p-8 rounded-xl shadow-lg mb-12">
-                <h4 class="text-2xl font-bold mb-6 text-center">เปรียบเทียบ VPN: IPSec vs. SSL</h4>
-                 <p class="text-center text-stone-600 mb-6">VPN ทั้งสองประเภทมีจุดเด่นต่างกัน การเลือกใช้ขึ้นอยู่กับความต้องการในการเข้าถึงและระดับการควบคุม</p>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-stone-100">
-                            <tr>
-                                <th class="p-4 font-semibold">คุณสมบัติ</th>
-                                <th class="p-4 font-semibold">IPSec VPN</th>
-                                <th class="p-4 font-semibold">SSL VPN</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="border-b">
-                                <td class="p-4">ระดับที่ทำงาน (Network Layer)</td>
-                                <td class="p-4">Layer 3 (Network)</td>
-                                <td class="p-4">Layer 4-7 (Transport - Application)</td>
-                            </tr>
-                            <tr class="border-b bg-stone-50">
-                                <td class="p-4">รูปแบบการเชื่อมต่อ</td>
-                                <td class="p-4">เชื่อมต่อ Host เข้ากับ "ทั้งเครือข่าย"</td>
-                                <td class="p-4">เชื่อมต่อผู้ใช้เข้ากับ "แอปพลิเคชันที่ระบุ"</td>
-                            </tr>
-                             <tr class="border-b">
-                                <td class="p-4">การใช้งาน</td>
-                                <td class="p-4">รองรับทุกแอปพลิเคชันที่ใช้ IP</td>
-                                <td class="p-4">เหมาะกับเว็บแอป, อีเมล, แชร์ไฟล์</td>
-                            </tr>
-                            <tr class="border-b bg-stone-50">
-                                <td class="p-4">Client</td>
-                                <td class="p-4">ต้องติดตั้งโปรแกรม VPN Client</td>
-                                <td class="p-4">ส่วนใหญ่ใช้ผ่านเว็บเบราว์เซอร์ (Clientless)</td>
-                            </tr>
-                             <tr>
-                                <td class="p-4">การควบคุม</td>
-                                <td class="p-4">ให้สิทธิ์เข้าถึงกว้าง อาจควบคุมยากกว่า</td>
-                                <td class="p-4">ควบคุมการเข้าถึงได้ละเอียดกว่ารายแอปพลิเคชัน</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Tunneling Visualization -->
-            <div class="bg-white p-8 rounded-xl shadow-lg">
-                <h4 class="text-2xl font-bold mb-6 text-center">Full Tunnel vs. Split Tunnel</h4>
-                <p class="text-center text-stone-600 mb-8">เลือกรูปแบบการส่งข้อมูลผ่าน VPN ให้เหมาะกับการใช้งาน เพื่อสร้างสมดุลระหว่างความปลอดภัยและประสิทธิภาพ</p>
-                <div class="flex justify-center mb-8 space-x-4">
-                    <button id="full-tunnel-btn" class="bg-teal-600 text-white px-6 py-2 rounded-full font-semibold shadow-md hover:bg-teal-700 transition">Full Tunnel</button>
-                    <button id="split-tunnel-btn" class="bg-stone-200 text-stone-700 px-6 py-2 rounded-full font-semibold hover:bg-stone-300 transition">Split Tunnel</button>
-                </div>
-                
-                <div class="relative max-w-4xl mx-auto p-4">
-                    <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 md:space-x-8">
-                        <div class="text-center">
-                            <div class="text-5xl">💻</div>
-                            <div class="font-bold mt-2">VPN Client</div>
-                        </div>
-                        
-                        <div class="relative w-full h-24 flex items-center">
-                            <!-- Base Tunnel -->
-                            <div class="absolute w-full h-4 bg-stone-200 rounded-full"></div>
-                            <!-- Full Tunnel Path -->
-                            <div id="full-path-1" class="path absolute w-full h-4 bg-teal-400 rounded-full opacity-0"></div>
-                            <!-- Split Tunnel Path -->
-                            <div id="split-path-1" class="path absolute w-1/2 h-4 bg-teal-400 rounded-l-full opacity-0"></div>
-                        </div>
-
-                        <div class="text-center">
-                            <div class="text-5xl">🏢</div>
-                             <div class="font-bold mt-2">VPN Server</div>
-                        </div>
-                    </div>
-                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full flex justify-center items-end h-32 pointer-events-none">
-                        <!-- Full Tunnel to Internet -->
-                        <svg id="full-path-2" class="path absolute w-48 h-24 opacity-0" viewBox="0 0 100 50">
-                            <path d="M 50 50 Q 0 50 0 0" stroke="#0d9488" stroke-width="8" fill="none" stroke-linecap="round"/>
-                        </svg>
-                        <!-- Split Tunnel to Internet -->
-                        <svg id="split-path-2" class="path absolute w-48 h-24 opacity-0" viewBox="0 0 100 50">
-                            <path d="M 0 50 Q 50 50 50 0" stroke="#0d9488" stroke-width="8" fill="none" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                     <div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-8 text-center">
-                        <div class="text-5xl">☁️</div>
-                        <div class="font-bold text-sm">Public Network</div>
-                    </div>
-                </div>
-
-                <div id="tunnel-info" class="mt-8 p-6 bg-stone-100 rounded-lg min-h-[120px]">
-                    <h5 id="tunnel-title" class="text-lg font-bold text-stone-800">เลือกรูปแบบเพื่อดูคำอธิบาย</h5>
-                    <p id="tunnel-desc" class="text-stone-600 mt-2"></p>
-                </div>
-            </div>
-
-        </section>
-
-    </main>
-
-    <footer class="bg-stone-800 text-white text-center p-6 mt-12">
-        <p>สร้างสรรค์เพื่อการเรียนรู้จากเอกสารประกอบการสอนวิชา 070315109 มจพ.</p>
-        <p class="text-sm text-stone-400 mt-1">Interactive SPA by Gemini</p>
-    </footer>
+        </main>
+    </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const fullTunnelBtn = document.getElementById('full-tunnel-btn');
-            const splitTunnelBtn = document.getElementById('split-tunnel-btn');
-            const tunnelTitle = document.getElementById('tunnel-title');
-            const tunnelDesc = document.getElementById('tunnel-desc');
-            
-            const fullPaths = [document.getElementById('full-path-1'), document.getElementById('full-path-2')];
-            const splitPaths = [document.getElementById('split-path-1'), document.getElementById('split-path-2')];
+        const studyGuideData = {
+            "1": {
+                title: "บทที่ 1: Security Roles and Controls",
+                questions: {
+                    "1": {
+                        q: "อธิบายความรับผิดชอบหลักของบทบาทด้านความมั่นคงปลอดภัยต่างๆ ในองค์กร",
+                        a: `
+                            <p class="mb-4">บทบาทด้านความมั่นคงปลอดภัยในองค์กรมีความรับผิดชอบแตกต่างกันไป แต่ทำงานร่วมกันเพื่อสร้างความปลอดภัยโดยรวม ดังนี้:</p>
+                            <ul class="list-disc list-inside space-y-3">
+                                <li><strong>ผู้จัดการความมั่นคงปลอดภัย (Security Manager / CISO):</strong> มีหน้าที่กำหนดกลยุทธ์, นโยบาย, และบริหารจัดการความเสี่ยงโดยรวม เพื่อสร้างกรอบการทำงานและวัฒนธรรมความปลอดภัยที่แข็งแกร่งจากบนลงล่าง</li>
+                                <li><strong>ผู้ดูแลระบบความมั่นคงปลอดภัย (Security Administrator / Engineer):</strong> มีหน้าที่ติดตั้ง, กำหนดค่า, และดูแลรักษาระบบและเครื่องมือด้านความปลอดภัย เช่น Firewall, IDS/IPS, Antivirus เป็นผู้สร้างและดูแลปราการด่านแรกในการป้องกันภัยคุกคามทางเทคนิค</li>
+                                <li><strong>นักวิเคราะห์ความมั่นคงปลอดภัย (Security Analyst):</strong> มีหน้าที่เฝ้าระวัง, ตรวจสอบ Log และแจ้งเตือน, สืบสวนเหตุการณ์ผิดปกติ, และตอบสนองต่อภัยคุกคาม (Incident Response) เป็นเสมือนยามที่คอยตรวจจับภัยคุกคามที่อาจเล็ดลอดเข้ามาในระบบ</li>
+                            </ul>
+                        `
+                    },
+                    "2": {
+                        q: "เปรียบเทียบความแตกต่างระหว่างการควบคุมความมั่นคงปลอดภัยประเภทป้องกัน, ตรวจจับ, และแก้ไข",
+                        a: `
+                            <p class="mb-4">การควบคุมความมั่นคงปลอดภัยทั้ง 3 ประเภททำงานร่วมกันเพื่อสร้างการป้องกันเชิงลึก (Defense in Depth) ดังนี้:</p>
+                            <table>
+                                <thead>
+                                    <tr><th>ประเภทการควบคุม</th><th>คำอธิบาย</th><th>ตัวอย่าง</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>ป้องกัน (Preventive)</strong></td>
+                                        <td>ออกแบบมาเพื่อ <strong>ป้องกัน</strong> ไม่ให้เหตุการณ์เกิดขึ้นตั้งแต่แรก</td>
+                                        <td>Firewall, การเข้ารหัส (Encryption), นโยบายรหัสผ่าน</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ตรวจจับ (Detective)</strong></td>
+                                        <td>ออกแบบมาเพื่อ <strong>ตรวจจับ</strong> เหตุการณ์ที่กำลังเกิดขึ้นหรือเกิดขึ้นไปแล้ว</td>
+                                        <td>ระบบตรวจจับการบุกรุก (IDS), กล้องวงจรปิด (CCTV), การตรวจสอบ Log</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>แก้ไข (Corrective)</strong></td>
+                                        <td>ออกแบบมาเพื่อ <strong>แก้ไขและฟื้นฟู</strong> ระบบหลังจากเกิดเหตุการณ์ขึ้นแล้ว</td>
+                                        <td>การกู้คืนระบบจาก Backup, แผนตอบสนองต่อเหตุการณ์ (Incident Response Plan)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        `
+                    },
+                    "3": {
+                        q: "นโยบายความมั่นคงปลอดภัย, มาตรฐาน, และแนวปฏิบัติแตกต่างกันอย่างไร",
+                        a: `
+                            <p class="mb-4">เอกสารทั้งสามมีความสัมพันธ์กันในลักษณะลำดับชั้น:</p>
+                            <ul class="list-disc list-inside space-y-3">
+                                <li><strong>นโยบาย (Policy):</strong> เอกสารระดับสูงที่กำหนด <strong>"สิ่งที่ต้องทำ"</strong> และเป้าหมาย เป็นข้อความบังคับใช้ เช่น "พนักงานทุกคนต้องใช้รหัสผ่านที่คาดเดาได้ยาก"</li>
+                                <li><strong>มาตรฐาน (Standard):</strong> เอกสารที่กำหนด <strong>"ข้อบังคับเฉพาะ"</strong> ที่ต้องปฏิบัติตามเพื่อให้สอดคล้องกับนโยบาย เช่น "รหัสผ่านต้องมีความยาวอย่างน้อย 12 ตัวอักษร"</li>
+                                <li><strong>แนวปฏิบัติ (Guideline/Procedure):</strong> เอกสารที่ให้ <strong>"คำแนะนำและขั้นตอน"</strong> เกี่ยวกับวิธีการปฏิบัติตาม เป็นข้อเสนอแนะที่ไม่ได้บังคับ เช่น "ขั้นตอนการตั้งรหัสผ่านใหม่..."</li>
+                            </ul>
+                        `
+                    },
+                     "4": {
+                        q: "อธิบายบทบาทของการจัดการความเสี่ยงในการจัดตั้งการควบคุมความมั่นคงปลอดภัย",
+                        a: `
+                            <p class="mb-4">การจัดการความเสี่ยงเป็นหัวใจสำคัญในการตัดสินใจเลือกใช้มาตรการควบคุมอย่างเหมาะสมและคุ้มค่า โดยมีกระบวนการดังนี้:</p>
+                            <ol class="list-decimal list-inside space-y-2">
+                                <li><strong>การประเมินความเสี่ยง (Risk Assessment):</strong> คือการระบุสินทรัพย์, ภัยคุกคาม, ช่องโหว่ และวิเคราะห์ผลกระทบกับโอกาสเกิด เพื่อกำหนดระดับความเสี่ยง</li>
+                                <li><strong>การบรรเทาความเสี่ยง (Risk Mitigation):</strong> คือการเลือกวิธีจัดการกับความเสี่ยง เช่น ลดความเสี่ยง (ใช้ Controls), ยอมรับ, หลีกเลี่ยง, หรือโอนย้ายความเสี่ยง (ซื้อประกัน)</li>
+                            </ol>
+                            <p class="mt-4">ผลของการจัดการความเสี่ยงช่วยให้องค์กรสามารถจัดลำดับความสำคัญและลงทุนป้องกันสินทรัพย์ที่มีความเสี่ยงสูงก่อนได้อย่างมีประสิทธิภาพ</p>
+                        `
+                    },
+                    "5": {
+                        q: "อะไรคือความแตกต่างที่สำคัญระหว่างการควบคุมความมั่นคงปลอดภัยทางการบริหาร, ทางเทคนิค, และทางกายภาพ",
+                        a: `
+                            <p class="mb-4">การควบคุมทั้ง 3 ประเภทเป็นองค์ประกอบหลักของกลยุทธ์การป้องกันเชิงลึก (Defense in Depth):</p>
+                            <table>
+                                <thead>
+                                    <tr><th>ประเภทการควบคุม</th><th>คำนิยาม</th><th>ตัวอย่าง</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>ทางการบริหาร (Administrative)</strong></td>
+                                        <td>การควบคุมที่เกี่ยวกับ <strong>นโยบาย, กระบวนการ, และบุคลากร</strong></td>
+                                        <td>นโยบายความปลอดภัย, การอบรม, การตรวจสอบประวัติพนักงาน</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ทางเทคนิค (Technical)</strong></td>
+                                        <td>การควบคุมที่ใช้ <strong>เทคโนโลยีและซอฟต์แวร์</strong></td>
+                                        <td>Firewall, การเข้ารหัสข้อมูล, ระบบ IDS</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ทางกายภาพ (Physical)</strong></td>
+                                        <td>การควบคุมที่เกี่ยวกับการ <strong>ปกป้องสินทรัพย์ทางกายภาพ</strong></td>
+                                        <td>ประตูล็อก, ยาม, กล้องวงจรปิด (CCTV)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        `
+                    }
+                }
+            },
+            "2": {
+                title: "บทที่ 2: Threat Actors and Intelligence",
+                questions: {
+                    "1": {
+                        q: "อธิบายประเภทต่างๆ ของผู้คุกคาม (Threat Actors) และแรงจูงใจของผู้คุกคาม",
+                        a: `
+                            <p class="mb-4">ผู้คุกคาม (Threat Actors) สามารถแบ่งตามแรงจูงใจได้ดังนี้:</p>
+                            <ul class="list-disc list-inside space-y-3">
+                                <li><strong>Script Kiddies:</strong> แรงจูงใจคือความอยากรู้อยากเห็น, การโอ้อวด</li>
+                                <li><strong>Hacktivists:</strong> แรงจูงใจคืออุดมการณ์ทางการเมืองหรือสังคม</li>
+                                <li><strong>Criminal Syndicates:</strong> แรงจูงใจคือผลประโยชน์ทางการเงิน</li>
+                                <li><strong>State-Sponsored Actors (APT):</strong> แรงจูงใจคือการจารกรรมข้อมูล, การสร้างความได้เปรียบทางการเมือง/การทหาร</li>
+                                <li><strong>Insider Threats:</strong> แรงจูงใจคือความไม่พอใจ, การแก้แค้น, หรือผลประโยชน์ทางการเงิน</li>
+                                <li><strong>Competitors:</strong> แรงจูงใจคือการจารกรรมข้อมูลเพื่อความได้เปรียบทางการแข่งขัน</li>
+                            </ul>
+                        `
+                    },
+                    "2": {
+                        q: "เปรียบเทียบความแตกต่างระหว่างภัยคุกคามจากภายนอกและภัยคุกคามจากภายใน",
+                        a: `
+                            <table>
+                                <thead>
+                                    <tr><th>ลักษณะ</th><th>ภัยคุกคามจากภายนอก (External)</th><th>ภัยคุกคามจากภายใน (Insider)</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>คำนิยาม</strong></td>
+                                        <td>มาจากบุคคลที่ <strong>ไม่มี</strong> สิทธิ์เข้าถึงระบบโดยตรง</td>
+                                        <td>มาจากบุคคลที่ <strong>มี</strong> สิทธิ์เข้าถึงระบบอยู่แล้ว</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ตัวอย่าง</strong></td>
+                                        <td>แฮกเกอร์, องค์กรอาชญากรรม</td>
+                                        <td>พนักงานที่ไม่พอใจ, พนักงานที่ขาดความระมัดระวัง</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>วิธีการป้องกัน</strong></td>
+                                        <td>การป้องกันที่ขอบเขตเครือข่าย (Firewall, IDS/IPS)</td>
+                                        <td>หลักการให้สิทธิ์น้อยที่สุด (Least Privilege), การตรวจสอบกิจกรรมผู้ใช้</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        `
+                    },
+                    "3": {
+                        q: "อธิบายความสำคัญของข่าวกรองภัยคุกคาม (Threat Intelligence)",
+                        a: `
+                            <p class="mb-4">Threat Intelligence คือข้อมูลเกี่ยวกับภัยคุกคามที่ผ่านการวิเคราะห์แล้ว มีความสำคัญดังนี้:</p>
+                            <ul class="list-disc list-inside space-y-3">
+                                <li><strong>เปลี่ยนจากเชิงรับเป็นเชิงรุก:</strong> ช่วยให้คาดการณ์และป้องกันการโจมตีได้ล่วงหน้า</li>
+                                <li><strong>เพิ่มประสิทธิภาพในการตรวจจับ:</strong> ให้ข้อมูล IOCs (Indicators of Compromise) ทำให้ระบบตรวจจับทำงานได้แม่นยำขึ้น</li>
+                                <li><strong>ช่วยในการตัดสินใจ:</strong> ช่วยให้เข้าใจว่าภัยคุกคามใดมีความเสี่ยงสูงสุด เพื่อจัดสรรทรัพยากรได้เหมาะสม</li>
+                                <li><strong>สนับสนุนการตอบสนองต่อเหตุการณ์:</strong> ช่วยให้เข้าใจเทคนิคของผู้โจมตี (TTPs) ทำให้รับมือได้เร็วขึ้น</li>
+                            </ul>
+                        `
+                    },
+                    "4": {
+                        q: "ความแตกต่างระหว่างข้อมูลเชิงลึกเกี่ยวกับภัยคุกคามเชิงกลยุทธ์ (Strategic) และเชิงยุทธวิธี (Tactical) คืออะไร",
+                        a: `
+                            <table>
+                                <thead>
+                                    <tr><th>ลักษณะ</th><th>ข่าวกรองเชิงกลยุทธ์ (Strategic)</th><th>ข่าวกรองเชิงยุทธวิธี (Tactical)</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>กลุ่มเป้าหมาย</strong></td>
+                                        <td>ผู้บริหารระดับสูง</td>
+                                        <td>ทีมปฏิบัติการด้านความปลอดภัย (SOC)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ลักษณะข้อมูล</strong></td>
+                                        <td>ภาพรวมแนวโน้มภัยคุกคาม, ความเสี่ยงต่อธุรกิจในระยะยาว</td>
+                                        <td>ข้อมูลทางเทคนิคที่นำไปปฏิบัติได้ทันที (IP Address, Hashes)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>วัตถุประสงค์</strong></td>
+                                        <td>เพื่อใช้ตัดสินใจเชิงนโยบาย, วางแผนงบประมาณ</td>
+                                        <td>เพื่อใช้ปรับปรุงการตั้งค่าเครื่องมือ, ตรวจจับ, และตอบสนองภัยคุกคาม</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        `
+                    }
+                }
+            },
+            "3": {
+                title: "บทที่ 3: Performing Security Assessments",
+                questions: {
+                    "1": {
+                        q: "อธิบายขั้นตอนหลักของการประเมินความปลอดภัย (Security Assessment)",
+                        a: `
+                            <p class="mb-4">การประเมินความปลอดภัยเป็นกระบวนการที่เป็นระบบ มีขั้นตอนหลักดังนี้:</p>
+                            <ol class="list-decimal list-inside space-y-2">
+                                <li><strong>การวางแผนและรวบรวมข้อมูล (Planning & Reconnaissance):</strong> กำหนดขอบเขต, เป้าหมาย, และรวบรวมข้อมูลเบื้องต้นเกี่ยวกับเป้าหมาย</li>
+                                <li><strong>การสแกนและค้นหา (Scanning & Discovery):</strong> ใช้เครื่องมือสแกนหาโฮสต์, พอร์ต, และบริการที่ทำงานอยู่ เพื่อสร้างแผนที่ของระบบ (Attack Surface)</li>
+                                <li><strong>การประเมินช่องโหว่และการทดสอบเจาะระบบ (Vulnerability Assessment & Pen Testing):</strong> ค้นหาจุดอ่อนและพยายามใช้ประโยชน์จากช่องโหว่เพื่อยืนยันว่าสามารถถูกโจมตีได้จริง</li>
+                                <li><strong>การวิเคราะห์ผลลัพธ์และการรายงาน (Analysis & Reporting):</strong> รวบรวมผล, วิเคราะห์ระดับความเสี่ยง, และจัดทำรายงานพร้อมข้อเสนอแนะในการแก้ไข</li>
+                            </ol>
+                        `
+                    },
+                    "2": {
+                        q: "เปรียบเทียบการประเมินความปลอดภัยเชิงรุก (Proactive) และเชิงรับ (Reactive)",
+                        a: `
+                             <table>
+                                <thead>
+                                    <tr><th>ลักษณะ</th><th>การประเมินเชิงรุก (Proactive)</th><th>การประเมินเชิงรับ (Reactive)</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>คำนิยาม</strong></td>
+                                        <td>การประเมินที่เกิดขึ้น <strong>ก่อน</strong> ที่จะเกิดเหตุการณ์โจมตี</td>
+                                        <td>การประเมินที่เกิดขึ้น <strong>หลัง</strong> จากที่เกิดเหตุการณ์โจมตี</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>วัตถุประสงค์</strong></td>
+                                        <td>เพื่อป้องกัน (Prevention)</td>
+                                        <td>เพื่อตอบสนอง (Response) และสืบสวน (Investigation)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ตัวอย่าง</strong></td>
+                                        <td>การสแกนช่องโหว่, การทดสอบเจาะระบบ</td>
+                                        <td>การวิเคราะห์มัลแวร์, การสืบสวนทางดิจิทัล (Forensics)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        `
+                    },
+                    "3": {
+                        q: "อธิบายความสำคัญของรายงานผลการประเมินความปลอดภัย",
+                        a: `
+                            <p class="mb-4">รายงานผลการประเมินความปลอดภัยมีความสำคัญอย่างยิ่ง เพราะเป็นเครื่องมือสื่อสารหลักเพื่อแจ้งผลไปยังผู้มีส่วนได้ส่วนเสียทั้งหมด เพื่อให้เกิดการดำเนินการแก้ไขอย่างเป็นรูปธรรม</p>
+                            <p class="font-semibold">ข้อมูลสำคัญที่ควรมีในรายงาน:</p>
+                            <ul class="list-disc list-inside space-y-2">
+                                <li><strong>บทสรุปสำหรับผู้บริหาร (Executive Summary):</strong> สรุปภาพรวมความเสี่ยงและผลกระทบต่อธุรกิจ</li>
+                                <li><strong>ขอบเขตและวัตถุประสงค์:</strong> ระบุขอบเขตของระบบที่ทำการประเมิน</li>
+                                <li><strong>ผลการค้นพบ (Findings):</strong> แจกแจงช่องโหว่ที่พบ, ระดับความรุนแรง, และหลักฐาน</li>
+                                <li><strong>ข้อเสนอแนะในการแก้ไข (Recommendations):</strong> เสนอแนวทางแก้ไขแต่ละช่องโหว่อย่างชัดเจน</li>
+                            </ul>
+                        `
+                    },
+                    "4": {
+                        q: "อธิบายบทบาทของการประเมินความปลอดภัยอย่างสม่ำเสมอ (Continuous Security Assessment)",
+                        a: `
+                            <p class="mb-4">การประเมินความปลอดภัยอย่างสม่ำเสมอ คือการเปลี่ยนจากการประเมินเป็นครั้งคราว มาเป็นการเฝ้าระวังและประเมินความเสี่ยงอย่างต่อเนื่อง มีบทบาทสำคัญดังนี้:</p>
+                            <ul class="list-disc list-inside space-y-3">
+                                <li><strong>ปรับตัวทันต่อภัยคุกคามใหม่ๆ:</strong> ช่วยให้องค์กรสามารถตรวจจับและตอบสนองต่อความเสี่ยงใหม่ๆ ได้ทันท่วงที</li>
+                                <li><strong>รองรับการเปลี่ยนแปลงของระบบ:</strong> ช่วยให้มั่นใจว่าการเปลี่ยนแปลงระบบ IT ไม่ได้สร้างช่องโหว่ใหม่ขึ้นมา</li>
+                                <li><strong>ให้ข้อมูลสถานะความปลอดภัยที่เป็นปัจจุบัน:</strong> ช่วยให้ผู้บริหารมีข้อมูลล่าสุดเพื่อใช้ในการตัดสินใจ</li>
+                                <li><strong>ทำให้การแก้ไขปัญหาง่ายขึ้น:</strong> สามารถแก้ไขปัญหาได้ทันทีที่ตรวจพบ แทนที่จะต้องแก้ไขปัญหาจำนวนมากที่สะสมมานาน</li>
+                            </ul>
+                        `
+                    }
+                }
+            },
+            "4": {
+                title: "บทที่ 4: Social Engineering and Malware",
+                questions: {
+                    "1": {
+                        q: "อธิบายความหมายและประเภทต่างๆ ของวิศวกรรมสังคม (Social Engineering)",
+                        a: `
+                            <p class="mb-4"><strong>วิศวกรรมสังคม (Social Engineering)</strong> คือศิลปะในการหลอกลวงหรือโน้มน้าวจิตใจคน เพื่อให้ได้มาซึ่งข้อมูลหรือเพื่อให้เหยื่อกระทำการบางอย่าง โดยอาศัยจุดอ่อนทางจิตวิทยาของมนุษย์</p>
+                            <p class="font-semibold">ประเภทต่างๆ:</p>
+                            <ul class="list-disc list-inside space-y-2">
+                                <li><strong>Phishing:</strong> การหลอกลวงผ่านอีเมลในวงกว้าง</li>
+                                <li><strong>Spear Phishing:</strong> การโจมตีแบบ Phishing ที่เจาะจงเป้าหมาย</li>
+                                <li><strong>Pretexting:</strong> การสร้างเรื่องราวสมมติขึ้นมาเพื่อหลอกเอาข้อมูล</li>
+                                <li><strong>Baiting:</strong> การล่อเหยื่อด้วยสิ่งของที่น่าสนใจ เช่น USB ที่ติดมัลแวร์</li>
+                                <li><strong>Tailgating:</strong> การเดินตามบุคคลที่มีสิทธิ์เข้าไปในพื้นที่หวงห้าม</li>
+                            </ul>
+                        `
+                    },
+                    "2": {
+                        q: "อธิบายวิธีการและเทคนิคที่ใช้ในการโจมตีแบบ Phishing และ Spear Phishing",
+                        a: `
+                             <table>
+                                <thead>
+                                    <tr><th>ลักษณะ</th><th>Phishing</th><th>Spear Phishing</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>เป้าหมาย</strong></td>
+                                        <td>วงกว้าง, ไม่เจาะจง (หว่านแห)</td>
+                                        <td>เจาะจงบุคคลหรือองค์กร (ใช้หอกแทง)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>เทคนิค</strong></td>
+                                        <td>สร้างอีเมลปลอมเลียนแบบองค์กรที่น่าเชื่อถือ, ใช้หัวข้อที่กระตุ้นอารมณ์, สร้างหน้าเว็บปลอม</td>
+                                        <td>รวบรวมข้อมูลเป้าหมาย (OSINT), สร้างอีเมลที่น่าเชื่อถือสูงโดยอ้างอิงข้อมูลส่วนตัว, ใช้ไฟล์แนบที่เกี่ยวข้องกับงาน</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        `
+                    },
+                    "3": {
+                        q: "อธิบายประเภทและลักษณะของมัลแวร์ (Malware) ที่พบได้ทั่วไป",
+                        a: `
+                            <p class="mb-4">มัลแวร์ (Malware) คือซอฟต์แวร์ที่เป็นอันตราย ประเภทที่พบบ่อยได้แก่:</p>
+                            <ul class="list-disc list-inside space-y-3">
+                                <li><strong>Virus (ไวรัส):</strong> แพร่กระจายโดยการแนบตัวเองไปกับไฟล์อื่น</li>
+                                <li><strong>Worm (หนอน):</strong> แพร่กระจายตัวเองผ่านเครือข่ายได้โดยไม่ต้องอาศัยไฟล์พาหะ</li>
+                                <li><strong>Trojan Horse (โทรจัน):</strong> โปรแกรมที่หลอกว่าเป็นโปรแกรมมีประโยชน์ แต่แอบแฝงการทำงานที่เป็นอันตราย</li>
+                                <li><strong>Ransomware (เรียกค่าไถ่):</strong> เข้ารหัสไฟล์ข้อมูลของผู้ใช้แล้วเรียกเงินค่าไถ่</li>
+                                <li><strong>Spyware (สปายแวร์):</strong> แอบรวบรวมข้อมูลของผู้ใช้โดยไม่ได้รับอนุญาต เช่น Keylogger</li>
+                            </ul>
+                        `
+                    },
+                    "4": {
+                        q: "อธิบายแนวทางการป้องกันและตรวจจับการโจมตีด้วยวิศวกรรมสังคม",
+                        a: `
+                            <p class="font-semibold">แนวทางการป้องกัน:</p>
+                            <ul class="list-disc list-inside space-y-2 mb-4">
+                                <li><strong>การอบรมสร้างความตระหนักรู้ (Security Awareness Training):</strong> เป็นวิธีที่สำคัญที่สุด คือการสอนให้พนักงาน "คิดก่อนคลิก"</li>
+                                <li><strong>การใช้การยืนยันตัวตนหลายปัจจัย (MFA):</strong> ป้องกันการเข้าถึงแม้รหัสผ่านจะรั่วไหล</li>
+                                <li><strong>นโยบายและกระบวนการที่ชัดเจน:</strong> กำหนดขั้นตอนที่รัดกุมสำหรับการดำเนินการที่ละเอียดอ่อน</li>
+                            </ul>
+                            <p class="font-semibold">แนวทางการตรวจจับ:</p>
+                            <ul class="list-disc list-inside space-y-2">
+                                <li><strong>ระบบกรองอีเมล (Email Filtering):</strong> กรองอีเมล Phishing และสแปม</li>
+                                <li><strong>การจำลองการโจมตี (Phishing Simulation):</strong> ทดสอบความตระหนักรู้ของพนักงาน</li>
+                            </ul>
+                        `
+                    },
+                    "5": {
+                        q: "อธิบายวิธีการจัดการและกำจัดมัลแวร์ในระบบคอมพิวเตอร์",
+                        a: `
+                            <p class="mb-4">เมื่อสงสัยว่าระบบติดมัลแวร์ ควรปฏิบัติตามขั้นตอนต่อไปนี้:</p>
+                            <ol class="list-decimal list-inside space-y-2">
+                                <li><strong>การระบุและประเมิน (Identification):</strong> ใช้โปรแกรมแอนตี้มัลแวร์สแกนเพื่อยืนยันการติดเชื้อ</li>
+                                <li><strong>การจำกัดการแพร่กระจาย (Containment):</strong> ตัดการเชื่อมต่อจากเครือข่ายทันที</li>
+                                <li><strong>การกำจัด (Eradication):</strong> ใช้โปรแกรมแอนตี้มัลแวร์กำจัด หรือล้างเครื่องและติดตั้งระบบปฏิบัติการใหม่ (Reimage)</li>
+                                <li><strong>การกู้คืน (Recovery):</strong> กู้คืนข้อมูลจาก Backup ที่เชื่อถือได้ และอัปเดตแพตช์ทั้งหมด</li>
+                                <li><strong>การเรียนรู้และปรับปรุง (Lessons Learned):</strong> วิเคราะห์หาสาเหตุและปรับปรุงมาตรการป้องกัน</li>
+                            </ol>
+                        `
+                    }
+                }
+            },
+            "5": {
+                title: "บทที่ 5: Basic Cryptographic Concepts",
+                questions: {
+                    "1": {
+                        q: "อธิบายหลักการพื้นฐานของการเข้ารหัสลับ (Cryptography)",
+                        a: `<p><strong>การเข้ารหัสลับ (Cryptography)</strong> คือการแปลงข้อมูล (Plaintext) ให้อยู่ในรูปแบบที่อ่านไม่เข้าใจ (Ciphertext) โดยใช้ Cipher และกุญแจ (Key) ซึ่งผู้ที่มีกุญแจที่ถูกต้องเท่านั้นจึงจะสามารถถอดรหัสกลับมาได้</p>
+                           <p class="mt-4"><strong>มีความสำคัญเพื่อ:</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>การรักษาความลับ (Confidentiality):</strong> ป้องกันการอ่านข้อมูลโดยไม่ได้รับอนุญาต</li>
+                               <li><strong>การรักษาความสมบูรณ์ (Integrity):</strong> ตรวจสอบว่าข้อมูลไม่ถูกแก้ไข</li>
+                               <li><strong>การพิสูจน์ตัวตน (Authentication):</strong> ยืนยันตัวตนของผู้ส่ง/ผู้รับ</li>
+                               <li><strong>การห้ามปฏิเสธความรับผิด (Non-repudiation):</strong> ผู้ส่งปฏิเสธไม่ได้ว่าตนเป็นผู้ส่ง</li>
+                           </ul>`
+                    },
+                    "2": {
+                        q: "เปรียบเทียบการเข้ารหัสแบบสมมาตร (Symmetric) และอสมมาตร (Asymmetric)",
+                        a: `<table>
+                                <thead>
+                                    <tr><th>ลักษณะ</th><th>สมมาตร (Symmetric)</th><th>อสมมาตร (Asymmetric)</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>กุญแจ</strong></td>
+                                        <td>ใช้ <strong>กุญแจดอกเดียวกัน</strong> ทั้งเข้ารหัสและถอดรหัส</td>
+                                        <td>ใช้ <strong>กุญแจคนละดอก</strong> (Public/Private Key)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ข้อดี</strong></td>
+                                        <td><strong>รวดเร็ว</strong> เหมาะกับข้อมูลขนาดใหญ่</td>
+                                        <td><strong>การจัดการกุญแจง่ายและปลอดภัย</strong>, รองรับ Digital Signature</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ข้อเสีย</strong></td>
+                                        <td><strong>ปัญหาการส่งกุญแจลับ</strong> ให้ผู้รับอย่างปลอดภัย</td>
+                                        <td><strong>ช้า</strong> ไม่เหมาะกับข้อมูลขนาดใหญ่โดยตรง</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ตัวอย่าง</strong></td>
+                                        <td>AES, DES</td>
+                                        <td>RSA, ECC</td>
+                                    </tr>
+                                </tbody>
+                            </table>`
+                    },
+                    "3": {
+                        q: "อธิบายการทำงานของการแฮช (Hashing)",
+                        a: `<p><strong>Hashing</strong> คือกระบวนการแปลงข้อมูลใดๆ ให้เป็นข้อมูลที่มี <strong>ความยาวคงที่</strong> (Hash Value) ซึ่งมีคุณสมบัติสำคัญคือ <strong>เป็นทางเดียว (One-way)</strong> ไม่สามารถคำนวณย้อนกลับได้</p>
+                           <p class="mt-4"><strong>ตัวอย่างการใช้เพื่อรักษาความสมบูรณ์ของข้อมูล:</strong> เมื่อดาวน์โหลดไฟล์จากเว็บไซต์ เราสามารถคำนวณค่า Hash ของไฟล์ที่ดาวน์โหลดมา แล้วนำไปเทียบกับค่า Hash ที่ผู้ให้บริการแสดงไว้ ถ้าค่าตรงกัน แสดงว่าไฟล์นั้นสมบูรณ์ ไม่ถูกแก้ไขระหว่างทาง</p>`
+                    },
+                    "4": {
+                        q: "ความแตกต่างระหว่าง Digital Signature และ Data Encryption",
+                        a: `<table>
+                                <thead>
+                                    <tr><th>ลักษณะ</th><th>Digital Signature</th><th>Data Encryption</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>วัตถุประสงค์</strong></td>
+                                        <td><strong>ยืนยันตัวตน</strong> และ <strong>ความสมบูรณ์</strong> ของข้อมูล</td>
+                                        <td><strong>รักษาความลับ</strong> ของข้อมูล</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>กระบวนการ</strong></td>
+                                        <td>เข้ารหัส <strong>ค่า Hash</strong> ของข้อมูลด้วย <strong>Private Key</strong> ของผู้ส่ง</td>
+                                        <td>เข้ารหัส <strong>ข้อมูลทั้งหมด</strong> ด้วยกุญแจ</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>การตรวจสอบ</strong></td>
+                                        <td>ใช้ <strong>Public Key</strong> ของผู้ส่งเพื่อถอดรหัสลายเซ็น</td>
+                                        <td>ใช้ <strong>Private Key</strong> ของผู้รับ (หรือ Symmetric Key) เพื่อถอดรหัสข้อมูล</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p class="mt-4"><strong>สรุป:</strong> Digital Signature เหมือนการ "ประทับตรา" รับรอง ส่วน Data Encryption เหมือนการ "ใส่กุญแจล็อก" ข้อมูล</p>`
+                    },
+                    "5": {
+                        q: "อธิบายแนวคิดของการจัดการกุญแจ (Key Management)",
+                        a: `<p><strong>การจัดการกุญแจ (Key Management)</strong> คือกระบวนการทั้งหมดที่เกี่ยวข้องกับวงจรชีวิตของกุญแจเข้ารหัส ตั้งแต่การสร้าง, การจัดเก็บ, การแจกจ่าย, การใช้งาน, การสำรอง, การเพิกถอน, ไปจนถึงการทำลายกุญแจ</p>
+                           <p class="mt-4"><strong>ความสำคัญ:</strong> ความปลอดภัยของระบบเข้ารหัสทั้งหมดขึ้นอยู่กับความปลอดภัยของกุญแจ หากกุญแจรั่วไหล การเข้ารหัสที่แข็งแกร่งที่สุดก็ไร้ความหมาย การจัดการกุญแจที่ดีช่วยป้องกันการขโมยกุญแจ, รับประกันความน่าเชื่อถือ, และจัดการเมื่อกุญแจถูกบุกรุกได้</p>`
+                    }
+                }
+            },
+            "6": {
+                title: "บทที่ 6: Implementing PKI",
+                questions: {
+                    "1": {
+                        q: "อธิบายความหมายและประโยชน์ของโครงสร้างกุญแจสาธารณะ (PKI)",
+                        a: `<p><strong>โครงสร้างกุญแจสาธารณะ (PKI)</strong> คือกรอบการทำงานที่ใช้ในการสร้างและจัดการ <strong>ใบรับรองดิจิทัล (Digital Certificates)</strong> เพื่อผูก <strong>กุญแจสาธารณะ (Public Key)</strong> เข้ากับตัวตนของบุคคลหรือองค์กร</p>
+                           <p class="mt-4"><strong>ประโยชน์หลัก:</strong> คือการ <strong>สร้างความไว้วางใจ (Trust)</strong> โดยมี <strong>หน่วยงานรับรอง (Certificate Authority - CA)</strong> เป็นบุคคลที่สามที่น่าเชื่อถือ ทำหน้าที่ตรวจสอบและรับรองความเป็นเจ้าของกุญแจ ทำให้เรามั่นใจได้ว่า Public Key ที่ได้มานั้นเป็นของจริง</p>`
+                    },
+                    "2": {
+                        q: "อธิบายกระบวนการสร้างและแจกจ่ายใบรับรองดิจิทัล",
+                        a: `<ol class="list-decimal list-inside space-y-2">
+                                <li><strong>ผู้ร้องขอสร้างคู่กุญแจ (Public/Private Key)</strong> และสร้างคำร้องขอใบรับรอง (CSR) ที่มี Public Key และข้อมูลระบุตัวตน</li>
+                                <li><strong>ผู้ร้องขอส่ง CSR ไปยัง Certificate Authority (CA)</strong></li>
+                                <li><strong>CA ตรวจสอบและยืนยันตัวตน</strong> ของผู้ร้องขอ (เช่น ตรวจสอบความเป็นเจ้าของโดเมน)</li>
+                                <li>เมื่อตรวจสอบผ่าน, <strong>CA จะใช้ Private Key ของ CA เอง</strong> ในการลงนาม (Sign) บนใบรับรองเพื่อเป็นการรับรอง</li>
+                                <li><strong>CA ส่งมอบใบรับรอง</strong> ที่ลงนามแล้วกลับไปยังผู้ร้องขอเพื่อนำไปติดตั้งใช้งาน</li>
+                           </ol>`
+                    },
+                    "3": {
+                        q: "อธิบายการทำงานของ PKI ในระบบ Digital Signature และ Data Encryption",
+                        a: `<p class="mb-4">PKI เป็นพื้นฐานที่ทำให้การใช้งานทั้งสองอย่างนี้มีความน่าเชื่อถือ:</p>
+                           <ul class="list-disc list-inside space-y-3">
+                               <li><strong>ในการเข้ารหัสข้อมูล (Encryption):</strong> PKI ช่วยให้ผู้ส่งมั่นใจได้ว่า Public Key ที่ใช้เข้ารหัสข้อมูลนั้นเป็นของ "ผู้รับที่ถูกต้อง" จริงๆ</li>
+                               <li><strong>ในการลงลายมือชื่อดิจิทัล (Signature):</strong> PKI ช่วยให้ผู้รับสามารถหา Public Key ของ "ผู้ส่งที่ถูกต้อง" ที่น่าเชื่อถือเพื่อใช้ในการตรวจสอบลายเซ็นได้</li>
+                           </ul>`
+                    },
+                    "4": {
+                        q: "อธิบายบทบาทของ Public Key และ Private Key",
+                        a: `<table>
+                                <thead>
+                                    <tr><th>กุญแจ</th><th>บทบาทหลัก</th><th>การใช้งาน</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Private Key (ส่วนตัว)</strong></td>
+                                        <td><strong>พิสูจน์ความเป็นเจ้าของ</strong> (ต้องเก็บเป็นความลับ)</td>
+                                        <td>ใช้ <strong>ถอดรหัส</strong> ข้อมูล และ <strong>สร้างลายเซ็นดิจิทัล</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Public Key (สาธารณะ)</strong></td>
+                                        <td><strong>ใช้เพื่อตรวจสอบ</strong> (เปิดเผยได้)</td>
+                                        <td>ใช้ <strong>เข้ารหัส</strong> ข้อมูล และ <strong>ตรวจสอบลายเซ็นดิจิทัล</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>`
+                    },
+                    "5": {
+                        q: "อธิบายการจัดการวงจรชีวิตของใบรับรองดิจิทัล (Certificate Lifecycle)",
+                        a: `<p>คือการจัดการใบรับรองตั้งแต่ต้นจนจบ ประกอบด้วย:</p>
+                           <ol class="list-decimal list-inside space-y-2">
+                               <li><strong>การร้องขอและออกใบรับรอง (Request & Issuance):</strong> การสร้างและรับรองใบรับรองใหม่</li>
+                               <li><strong>การติดตั้งและใช้งาน (Installation & Use):</strong> การนำใบรับรองไปใช้งาน</li>
+                               <li><strong>การต่ออายุ (Renewal):</strong> การต่ออายุใบรับรองก่อนหมดอายุ เพื่อให้บริการไม่หยุดชะงัก</li>
+                               <li><strong>การเพิกถอน (Revocation):</strong> การยกเลิกใบรับรองก่อนหมดอายุ ในกรณีที่ Private Key รั่วไหล โดยประกาศผ่าน CRL หรือ OCSP</li>
+                               <li><strong>การหมดอายุ (Expiration):</strong> การสิ้นสุดการใช้งานเมื่อถึงกำหนด</li>
+                           </ol>
+                           <p class="mt-4">การจัดการที่ดีช่วยป้องกันปัญหาใบรับรองหมดอายุและป้องกันการใช้ใบรับรองที่ถูกขโมย</p>`
+                    }
+                }
+            },
+            "7": {
+                title: "บทที่ 7: Authentication Controls",
+                questions: {
+                    "1": {
+                        q: "อธิบายหลักการและความสำคัญของการตรวจสอบสิทธิ์ (Authentication)",
+                        a: `<p><strong>Authentication</strong> คือกระบวนการ <strong>พิสูจน์และยืนยันตัวตน</strong> ของผู้ใช้ว่าเป็นบุคคลที่กล่าวอ้างจริง เป็นการตอบคำถามว่า "คุณคือใคร?"</p>
+                           <p class="mt-4"><strong>ความสำคัญ:</strong> เป็นรากฐานของการควบคุมการเข้าถึง (Access Control) หากไม่มี Authentication ที่น่าเชื่อถือ มาตรการความปลอดภัยอื่นๆ ก็จะไร้ความหมาย เพราะใช้เพื่อ:</p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li>ป้องกันการเข้าถึงโดยไม่ได้รับอนุญาต</li>
+                               <li>เป็นพื้นฐานของการให้สิทธิ์ (Authorization) ว่าผู้ใช้คนนั้นมีสิทธิ์ทำอะไรได้บ้าง</li>
+                               <li>สร้างความรับผิดชอบ (Accountability) โดยสามารถติดตามกิจกรรมของผู้ใช้ได้</li>
+                           </ul>`
+                    },
+                    "2": {
+                        q: "เปรียบเทียบการตรวจสอบสิทธิ์แบบใช้รหัสผ่านและแบบหลายปัจจัย (MFA)",
+                        a: `<table>
+                                <thead>
+                                    <tr><th>ลักษณะ</th><th>รหัสผ่าน (Password)</th><th>หลายปัจจัย (MFA)</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>จำนวนปัจจัย</strong></td>
+                                        <td>ใช้ <strong>1 ปัจจัย</strong> ("สิ่งที่คุณรู้")</td>
+                                        <td>ใช้ <strong>2 ปัจจัยขึ้นไป</strong> จากประเภทที่ต่างกัน</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ประเภทปัจจัย</strong></td>
+                                        <td>- สิ่งที่คุณรู้</td>
+                                        <td>- สิ่งที่คุณรู้ (รหัสผ่าน)<br>- สิ่งที่คุณมี (มือถือ, Token)<br>- สิ่งที่คุณเป็น (ลายนิ้วมือ)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ความปลอดภัย</strong></td>
+                                        <td><strong>ต่ำ</strong> อ่อนแอต่อ Phishing, Brute-force</td>
+                                        <td><strong>สูงมาก</strong> แม้รหัสผ่านรั่วไหลก็ยังปลอดภัย</td>
+                                    </tr>
+                                </tbody>
+                            </table>`
+                    },
+                    "3": {
+                        q: "อธิบายวิธีการทำงานของโพรโทคอล Kerberos",
+                        a: `<p>Kerberos ทำงานคล้ายกับการ "ซื้อตั๋ว" เพื่อเข้าใช้บริการต่างๆ ในเครือข่าย:</p>
+                           <ol class="list-decimal list-inside space-y-2">
+                               <li><strong>ขอตั๋วตั้งต้น (TGT):</strong> เมื่อผู้ใช้ล็อกอินครั้งแรก Client จะขอ <strong>Ticket Granting Ticket (TGT)</strong> จาก Key Distribution Center (KDC)</li>
+                               <li><strong>ขอตั๋วเข้าใช้บริการ:</strong> เมื่อต้องการใช้บริการใดๆ Client จะนำ TGT ไปยื่นที่ KDC เพื่อขอ <strong>Service Ticket</strong> สำหรับบริการนั้นๆ</li>
+                               <li><strong>เข้าใช้บริการ:</strong> Client นำ Service Ticket ไปแสดงต่อ Application Server เพื่อเข้าใช้งาน</li>
+                           </ol>
+                           <p class="mt-4"><strong>ข้อดี:</strong> รองรับ Single Sign-On (SSO) และมีความปลอดภัยสูงเพราะรหัสผ่านถูกส่งเพียงครั้งเดียว</p>`
+                    },
+                    "4": {
+                        q: "อธิบายการใช้ไบโอเมตริก (Biometrics) ในการตรวจสอบสิทธิ์",
+                        a: `<p>ไบโอเมตริกคือการใช้ลักษณะเฉพาะทางกายภาพหรือพฤติกรรมในการยืนยันตัวตน เป็นปัจจัยประเภท "สิ่งที่คุณเป็น"</p>
+                           <p class="mt-4"><strong>ตัวอย่าง:</strong> ลายนิ้วมือ, ใบหน้า, ม่านตา, เสียงพูด</p>
+                           <p class="mt-4"><strong>ข้อควรระวัง:</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>ความผิดพลาด:</strong> อาจเกิดการยอมรับคนผิด (False Acceptance) หรือปฏิเสธเจ้าของ (False Rejection)</li>
+                               <li><strong>การปลอมแปลง (Spoofing):</strong> ข้อมูลบางอย่างอาจถูกปลอมแปลงได้</li>
+                               <li><strong>ความเป็นส่วนตัว:</strong> หากข้อมูลไบโอเมตริกรั่วไหล จะไม่สามารถเปลี่ยนแปลงได้เหมือนรหัสผ่าน</li>
+                           </ul>`
+                    },
+                    "5": {
+                        q: "อธิบายความแตกต่างระหว่าง 2FA กับ 2SV",
+                        a: `<p>แม้จะคล้ายกัน แต่มีความแตกต่างทางเทคนิค:</p>
+                           <ul class="list-disc list-inside space-y-3">
+                               <li><strong>2FA (Two-Factor Authentication):</strong> ต้องใช้หลักฐาน 2 อย่างจาก <strong>ปัจจัยคนละประเภทกัน</strong> เช่น รหัสผ่าน (รู้) + OTP จากมือถือ (มี)</li>
+                               <li><strong>2SV (Two-Step Verification):</strong> ใช้หลักฐาน 2 อย่าง ซึ่งอาจจะมาจาก <strong>ปัจจัยประเภทเดียวกันก็ได้</strong> เช่น รหัสผ่าน (รู้) + PIN (รู้)</li>
+                           </ul>
+                           <p class="mt-4"><strong>สรุป:</strong> 2FA ทุกรูปแบบคือ 2SV แต่ 2SV ไม่ใช่ 2FA ทุกรูปแบบ โดย 2FA มีความปลอดภัยสูงกว่า</p>`
+                    }
+                }
+            },
+             "8": {
+                title: "บทที่ 8: IAM Controls",
+                questions: {
+                    "1": {
+                        q: "อธิบายความสำคัญของการจัดการข้อมูลประจำตัวและการควบคุมบัญชี",
+                        a: `<p>การจัดการข้อมูลประจำตัวและการควบคุมบัญชี (IAM) คือกระบวนการที่ทำให้มั่นใจว่า <strong>"คนที่ใช่"</strong> สามารถเข้าถึง <strong>"ทรัพยากรที่ใช่"</strong> ใน <strong>"เวลาที่ใช่"</strong></p>
+                           <p class="mt-4"><strong>ความสำคัญ:</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>ควบคุมการเข้าถึง (Access Control):</strong> ป้องกันการเข้าถึงโดยไม่ได้รับอนุญาต</li>
+                               <li><strong>บังคับใช้หลักการให้สิทธิ์น้อยที่สุด (Least Privilege):</strong> จำกัดความเสียหายหากบัญชีถูกบุกรุก</li>
+                               <li><strong>สร้างความรับผิดชอบ (Accountability):</strong> สามารถติดตามและตรวจสอบได้ว่าใครทำอะไร</li>
+                               <li><strong>จัดการวงจรชีวิตบัญชี (Lifecycle Management):</strong> ดูแลบัญชีตั้งแต่การสร้างจนถึงการปิดบัญชีเมื่อลาออก</li>
+                           </ul>`
+                    },
+                    "2": {
+                        q: "วิเคราะห์ข้อดีและข้อเสียของ Multi-Factor Authentication (MFA)",
+                        a: `<table>
+                                <thead>
+                                    <tr><th>ข้อดี</th><th>ข้อเสีย</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>ความปลอดภัยสูงมาก:</strong> เป็นวิธีที่มีประสิทธิภาพที่สุดในการป้องกันการยึดครองบัญชี</td>
+                                        <td><strong>ความซับซ้อนในการใช้งาน:</strong> อาจสร้างความยุ่งยากให้ผู้ใช้</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ลดความเสี่ยงจากการใช้รหัสผ่านซ้ำ</strong></td>
+                                        <td><strong>ค่าใช้จ่ายในการติดตั้งและบำรุงรักษา</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>สนับสนุนการปฏิบัติตามข้อกำหนด</strong></td>
+                                        <td><strong>ปัญหาการกู้คืนบัญชี:</strong> หากผู้ใช้ทำอุปกรณ์สำหรับปัจจัยที่สองหาย</td>
+                                    </tr>
+                                </tbody>
+                            </table>`
+                    },
+                    "3": {
+                        q: "อธิบายวิธีการปฏิบัติที่ดีที่สุดในการบริหารจัดการบัญชีผู้ใช้ในองค์กรใหญ่",
+                        a: `<ul class="list-disc list-inside space-y-3">
+                               <li><strong>ใช้ระบบจัดการแบบรวมศูนย์ (Centralized Management):</strong> เช่น Active Directory หรือ LDAP</li>
+                               <li><strong>ใช้การควบคุมการเข้าถึงตามบทบาท (RBAC):</strong> สร้างบทบาทตามตำแหน่งงานแล้วกำหนดสิทธิ์ให้บทบาทนั้นๆ</li>
+                               <li><strong>ทำให้กระบวนการเป็นอัตโนมัติ (Automation):</strong> ใช้ระบบอัตโนมัติในการสร้างและปิดบัญชีเมื่อพนักงานเข้า/ออก</li>
+                               <li><strong>มีการทบทวนสิทธิ์อย่างสม่ำเสมอ (Regular Access Reviews):</strong> ตรวจสอบสิทธิ์การเข้าถึงของผู้ใช้เป็นประจำ</li>
+                               <li><strong>มีการบันทึกและตรวจสอบ (Logging and Auditing):</strong> บันทึกกิจกรรมการล็อกอินและการเข้าถึงทรัพยากร</li>
+                           </ul>`
+                    },
+                    "4": {
+                        q: "แนวทางการบริหารจัดการสิทธิ์แบบใดมีประสิทธิภาพที่สุดในสภาพแวดล้อมการทำงานของคุณ?",
+                        a: `<p>โดยทั่วไปแล้ว <strong>การควบคุมการเข้าถึงตามบทบาท (Role-Based Access Control - RBAC)</strong> มักจะมีประสิทธิภาพมากที่สุดสำหรับองค์กรส่วนใหญ่</p>
+                           <p class="mt-4"><strong>เหตุผล:</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>จัดการง่าย (Scalable):</strong> เหมาะกับองค์กรที่มีพนักงานจำนวนมากและมีการเปลี่ยนแปลงตำแหน่งบ่อย</li>
+                               <li><strong>สอดคล้องกับโครงสร้างองค์กร:</strong> สามารถออกแบบให้สอดคล้องกับตำแหน่งงานได้โดยตรง</li>
+                               <li><strong>บังคับใช้หลักการให้สิทธิ์น้อยที่สุดได้ดี:</strong> การออกแบบบทบาทที่ดีจะช่วยให้พนักงานได้รับสิทธิ์เท่าที่จำเป็น</li>
+                               <li><strong>ง่ายต่อการตรวจสอบ (Auditing):</strong> ตรวจสอบสิทธิ์ได้ง่ายโดยดูจากบทบาท</li>
+                           </ul>`
+                    },
+                    "5": {
+                        q: "วิจารณ์ความท้าทายในการบริหารจัดการบัญชีผู้ใช้และเสนอแนวทางแก้ไข",
+                        a: `<table>
+                                <thead>
+                                    <tr><th>ความท้าทาย</th><th>แนวทางแก้ไข</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Privilege Creep (สิทธิ์ที่เพิ่มขึ้นเรื่อยๆ):</strong> พนักงานย้ายแผนกแต่สิทธิ์เก่าไม่ถูกนำออก</td>
+                                        <td>นำกระบวนการ <strong>ทบทวนสิทธิ์การเข้าถึง (Access Review)</strong> มาใช้อย่างสม่ำเสมอ</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>บัญชีกำพร้า (Orphaned Accounts):</strong> พนักงานลาออกแต่บัญชีไม่ถูกปิด</td>
+                                        <td>สร้าง <strong>กระบวนการ Offboarding อัตโนมัติ</strong> ที่เชื่อมโยงกับระบบ HR</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>การจัดการบัญชีที่ไม่ใช่ของมนุษย์:</strong> เช่น Service Accounts, API Keys</td>
+                                        <td>ใช้เครื่องมือ <strong>Privileged Access Management (PAM)</strong> เพื่อจัดการและหมุนเวียนรหัสผ่านอัตโนมัติ</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>สภาพแวดล้อมแบบไฮบริด (On-premise & Cloud):</strong> การจัดการตัวตนซับซ้อน</td>
+                                        <td>ใช้โซลูชัน <strong>Identity Provider (IdP)</strong> ที่รองรับ Federation และ SSO</td>
+                                    </tr>
+                                </tbody>
+                            </table>`
+                    }
+                }
+            },
+            "9": {
+                title: "บทที่ 9: Secure Network Designs",
+                questions: {
+                    "1": {
+                        q: "อธิบายหลักการและความสำคัญของการแยกส่วนเครือข่าย (Network Segmentation)",
+                        a: `<p><strong>การแยกส่วนเครือข่าย (Network Segmentation)</strong> คือการแบ่งเครือข่ายใหญ่ออกเป็นส่วนย่อยๆ (Segment) ที่แยกจากกัน และควบคุมการสื่อสารระหว่างส่วนต่างๆ ผ่าน Firewall</p>
+                           <p class="mt-4"><strong>ความสำคัญ:</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>จำกัดการเคลื่อนที่ของภัยคุกคาม (Limit Lateral Movement):</strong> หากผู้โจมตีบุกรุกเข้ามาในส่วนหนึ่งได้ จะไม่สามารถเคลื่อนที่ไปยังส่วนอื่นได้ง่าย</li>
+                               <li><strong>ลดพื้นผิวการโจมตี (Reduce Attack Surface):</strong> ผู้โจมตีจะมองเห็นและเข้าถึงได้เฉพาะส่วนที่เปิดเผยสู่สาธารณะ</li>
+                               <li><strong>ปกป้องข้อมูลที่ละเอียดอ่อน:</strong> สามารถสร้างโซนที่มีความปลอดภัยสูงเป็นพิเศษสำหรับข้อมูลสำคัญ</li>
+                           </ul>`
+                    },
+                    "2": {
+                        q: "อธิบายบทบาทของการควบคุมการเข้าถึงแบบ Zero Trust",
+                        a: `<p><strong>Zero Trust</strong> คือรูปแบบความปลอดภัยที่มีหลักการว่า <strong>"Never trust, always verify"</strong> (ไม่ไว้วางใจสิ่งใดเลย, ตรวจสอบเสมอ) โดยจะยกเลิกแนวคิดที่ว่าสิ่งที่อยู่ "ภายใน" เครือข่ายน่าเชื่อถือ</p>
+                           <p class="mt-4"><strong>บทบาทสำคัญ:</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>ยกเลิกแนวคิดเรื่องขอบเขตที่น่าเชื่อถือ:</strong> ทุกการเชื่อมต่อต้องถูกตรวจสอบสิทธิ์ ไม่ว่าจะมาจากภายในหรือภายนอก</li>
+                               <li><strong>การตรวจสอบสิทธิ์ที่เข้มงวด:</strong> บังคับใช้ MFA สำหรับทุกการเข้าถึง</li>
+                               <li><strong>Micro-segmentation:</strong> แบ่งเครือข่ายในระดับที่ละเอียดมากยิ่งขึ้น อาจถึงระดับแอปพลิเคชันแต่ละตัว</li>
+                           </ul>`
+                    },
+                    "3": {
+                        q: "VPN มีประโยชน์ต่อความปลอดภัยของเครือข่ายอย่างไร?",
+                        a: `<p>VPN (Virtual Private Network) สร้าง "อุโมงค์" ที่มีการเข้ารหัส (Encrypted Tunnel) ผ่านเครือข่ายสาธารณะ</p>
+                           <p class="mt-4"><strong>ประโยชน์:</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>การรักษาความลับ (Confidentiality):</strong> เข้ารหัสข้อมูลทั้งหมด ป้องกันการดักฟัง</li>
+                               <li><strong>การรักษาความสมบูรณ์ (Integrity):</strong> ป้องกันข้อมูลถูกแก้ไขระหว่างทาง</li>
+                           </ul>
+                           <p class="mt-4"><strong>สถานการณ์สำคัญ:</strong> การทำงานจากระยะไกล (Remote Work), การใช้ Wi-Fi สาธารณะ, การเชื่อมต่อระหว่างสาขา (Site-to-Site)</p>`
+                    },
+                    "4": {
+                        q: "ความเสี่ยงด้านความปลอดภัยในเครือข่าย Wi-Fi และมาตรการลดความเสี่ยง",
+                        a: `<p class="font-semibold">ความเสี่ยง:</p>
+                           <ul class="list-disc list-inside space-y-2 mb-4">
+                               <li><strong>การดักฟังข้อมูล (Eavesdropping):</strong> หากไม่มีการเข้ารหัสที่แข็งแกร่ง</li>
+                               <li><strong>Evil Twin:</strong> ผู้โจมตีสร้าง Wi-Fi ปลอมชื่อเหมือนของจริงเพื่อหลอกให้เชื่อมต่อ</li>
+                               <li><strong>Deauthentication Attack:</strong> ผู้โจมตีส่งแพ็กเกตปลอมเพื่อตัดการเชื่อมต่อของผู้ใช้</li>
+                           </ul>
+                           <p class="font-semibold">มาตรการลดความเสี่ยง:</p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li>ใช้การเข้ารหัสที่แข็งแกร่ง: <strong>WPA3</strong> หรือ WPA2-AES</li>
+                               <li>ใช้การยืนยันตัวตนระดับองค์กร (WPA3-Enterprise / 802.1X)</li>
+                               <li>แยกเครือข่ายสำหรับแขก (Guest Network Segmentation)</li>
+                           </ul>`
+                    },
+                    "5": {
+                        q: "Load Balancer มีหลักการทำงานอย่างไร?",
+                        a: `<p>Load Balancer ทำหน้าที่เป็น "ผู้จัดการจราจร" สำหรับคำร้องขอที่เข้ามายังกลุ่มของเซิร์ฟเวอร์ โดยจะรับคำร้องขอไว้ที่ตัวเอง แล้วส่งต่อไปยังเซิร์ฟเวอร์ที่เหมาะสมที่สุดในกลุ่ม</p>
+                           <p class="mt-4"><strong>เกณฑ์ที่ใช้ในการตัดสินใจ (Scheduling Algorithms):</strong></p>
+                           <ul class="list-disc list-inside space-y-2">
+                               <li><strong>Round Robin:</strong> กระจายงานไปยังเซิร์ฟเวอร์แต่ละตัวตามลำดับวนไปเรื่อยๆ</li>
+                               <li><strong>Least Connections:</strong> ส่งงานไปยังเซิร์ฟเวอร์ที่มีจำนวนการเชื่อมต่อน้อยที่สุด</li>
+                               <li><strong>Source IP Affinity (Session Persistence):</strong> ส่งคำร้องขอจาก IP เดียวกันไปยังเซิร์ฟเวอร์ตัวเดิมเสมอ (จำเป็นสำหรับเว็บที่ต้องรักษาสถานะ เช่น ตะกร้าสินค้า)</li>
+                           </ul>`
+                    }
+                }
+            },
+            "10": {
+                title: "บทที่ 10: Network Security Appliances",
+                questions: {
+                    "1": {
+                        q: "อธิบายความแตกต่างระหว่าง Packet Filtering Firewall และ Stateful Inspection Firewall",
+                        a: `<table>
+                                <thead>
+                                    <tr><th>ลักษณะ</th><th>Packet Filtering (Stateless)</th><th>Stateful Inspection</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>หลักการทำงาน</strong></td>
+                                        <td>ตรวจสอบแพ็กเก็ตแต่ละตัว <strong>แบบแยกจากกัน</strong> โดยดูจาก IP และ Port เท่านั้น</td>
+                                        <td>ตรวจสอบแพ็กเก็ตโดย <strong>ติดตามสถานะของการเชื่อมต่อ (Connection State)</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ข้อดี</strong></td>
+                                        <td>รวดเร็ว, ต้นทุนต่ำ</td>
+                                        <td><strong>ปลอดภัยกว่ามาก</strong>, สามารถป้องกันการโจมตีที่ซับซ้อนได้ดีกว่า</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ข้อเสีย</strong></td>
+                                        <td><strong>ความปลอดภัยต่ำ</strong>, ไม่สามารถป้องกันการโจมตีที่อาศัยการปลอมแปลงสถานะการเชื่อมต่อได้</td>
+                                        <td>ใช้ทรัพยากรมากกว่า, อาจช้ากว่าเล็กน้อย</td>
+                                    </tr>
+                                </tbody>
+                            </table>`
+                    }
+                }
+            }
+        };
 
-            function activateFullTunnel() {
-                fullTunnelBtn.classList.remove('bg-stone-200', 'text-stone-700');
-                fullTunnelBtn.classList.add('bg-teal-600', 'text-white', 'shadow-md');
-                splitTunnelBtn.classList.add('bg-stone-200', 'text-stone-700');
-                splitTunnelBtn.classList.remove('bg-teal-600', 'text-white', 'shadow-md');
+        document.addEventListener('DOMContentLoaded', () => {
+            const navMenu = document.getElementById('navigation-menu');
+            const questionTitleEl = document.getElementById('question-title');
+            const questionAnswerEl = document.getElementById('question-answer');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('app-overlay');
 
-                fullPaths.forEach(p => p.style.opacity = '1');
-                splitPaths.forEach(p => p.style.opacity = '0');
+            function renderContent(chapterId, questionId) {
+                const chapter = studyGuideData[chapterId];
+                const questionData = chapter.questions[questionId];
 
-                tunnelTitle.textContent = 'Full Tunnel: ปลอดภัยสูงสุด';
-                tunnelDesc.textContent = 'ทราฟฟิกทั้งหมดจากเครื่องของคุณ (ทั้งที่ไปยังเครือข่ายบริษัทและอินเทอร์เน็ต) จะถูกส่งผ่านอุโมงค์ VPN ที่เข้ารหัสไปยังเซิร์ฟเวอร์ของบริษัทก่อนเสมอ ให้ความปลอดภัยสูงสุด แต่ก็อาจทำให้การใช้งานอินเทอร์เน็ตทั่วไปช้าลง';
+                questionTitleEl.textContent = `คำถาม ${chapterId}.${questionId}: ${questionData.q}`;
+                questionAnswerEl.innerHTML = questionData.a;
+
+                document.querySelectorAll('.active-nav').forEach(el => el.classList.remove('active-nav'));
+                const activeLink = document.querySelector(`[data-chapter='${chapterId}'][data-question='${questionId}']`);
+                if (activeLink) {
+                    activeLink.classList.add('active-nav');
+                    const parentChapter = activeLink.closest('.chapter-container');
+                    if (parentChapter) {
+                        const questionList = parentChapter.querySelector('.question-list');
+                        if (questionList) questionList.style.display = 'block';
+                    }
+                }
+                
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('open');
+                }
             }
 
-            function activateSplitTunnel() {
-                splitTunnelBtn.classList.remove('bg-stone-200', 'text-stone-700');
-                splitTunnelBtn.classList.add('bg-teal-600', 'text-white', 'shadow-md');
-                fullTunnelBtn.classList.add('bg-stone-200', 'text-stone-700');
-                fullTunnelBtn.classList.remove('bg-teal-600', 'text-white', 'shadow-md');
+            Object.keys(studyGuideData).forEach(chapterId => {
+                const chapter = studyGuideData[chapterId];
+                const chapterContainer = document.createElement('div');
+                chapterContainer.className = 'chapter-container mb-2';
 
-                fullPaths.forEach(p => p.style.opacity = '0');
-                splitPaths.forEach(p => p.style.opacity = '1');
+                const chapterEl = document.createElement('div');
+                chapterEl.textContent = chapter.title;
+                chapterEl.className = 'sidebar-chapter p-2 rounded-md font-semibold';
+                chapterEl.dataset.chapter = chapterId;
+                
+                const questionList = document.createElement('ul');
+                questionList.className = 'question-list pl-4 mt-1';
+                questionList.style.display = 'none';
 
-                tunnelTitle.textContent = 'Split Tunnel: ยืดหยุ่นและรวดเร็ว';
-                tunnelDesc.textContent = 'เฉพาะทราฟฟิกที่ต้องการเชื่อมต่อไปยังเครือข่ายบริษัทเท่านั้นที่จะวิ่งผ่าน VPN ส่วนทราฟฟิกอินเทอร์เน็ตอื่นๆ (เช่น ดูวิดีโอ, ฟังเพลง) จะออกสู่ Public Network โดยตรง ทำให้มีประสิทธิภาพและความเร็วสูงกว่า แต่ก็ลดการควบคุมด้านความปลอดภัยลง';
-            }
+                Object.keys(chapter.questions).forEach(questionId => {
+                    const question = chapter.questions[questionId];
+                    const questionEl = document.createElement('li');
+                    questionEl.textContent = `คำถาม ${chapterId}.${questionId}`;
+                    questionEl.className = 'sidebar-question p-2 rounded-md text-sm';
+                    questionEl.dataset.chapter = chapterId;
+                    questionEl.dataset.question = questionId;
+                    questionList.appendChild(questionEl);
+                });
 
-            fullTunnelBtn.addEventListener('click', activateFullTunnel);
-            splitTunnelBtn.addEventListener('click', activateSplitTunnel);
+                chapterContainer.appendChild(chapterEl);
+                chapterContainer.appendChild(questionList);
+                navMenu.appendChild(chapterContainer);
+            });
 
-            const mobileNav = document.getElementById('mobile-nav');
-            mobileNav.addEventListener('change', function() {
-                window.location.hash = this.value;
+            navMenu.addEventListener('click', (e) => {
+                if (e.target.classList.contains('sidebar-chapter')) {
+                    const questionList = e.target.nextElementSibling;
+                    const isVisible = questionList.style.display === 'block';
+                    document.querySelectorAll('.question-list').forEach(ql => ql.style.display = 'none');
+                    questionList.style.display = isVisible ? 'none' : 'block';
+                } else if (e.target.classList.contains('sidebar-question')) {
+                    const chapterId = e.target.dataset.chapter;
+                    const questionId = e.target.dataset.question;
+                    renderContent(chapterId, questionId);
+                }
             });
             
-            activateFullTunnel();
+            mobileMenuButton.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('open');
+            });
+
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('open');
+            });
+
+            renderContent("1", "1");
         });
     </script>
 </body>
